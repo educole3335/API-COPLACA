@@ -9,16 +9,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserDTO {
-    private Long id;
+public class SignUpRequest {
     private String email;
+    private String password;
     private String firstName;
     private String lastName;
     private String phoneNumber;
-    private String profileImage;
     private AddressDTO address;
-    private Long warehouseId;
-    private String warehouseName;
-    private java.util.Set<String> roles;
-    private boolean enabled;
+    private String role; // ROLE_CUSTOMER, ROLE_DELIVERY, ROLE_LOGISTICS, ROLE_ADMIN
 }
