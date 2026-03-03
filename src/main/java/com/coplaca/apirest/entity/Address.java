@@ -4,24 +4,35 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "warehouses")
-public class Warehouse {
+@Table(name = "addresses")
+public class Address {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(nullable = false, unique = true)
-    private String name;
+    @Column(nullable = false)
+    private String street;
+    
+    @Column
+    private String streetNumber;
+    
+    @Column
+    private String apartment;
     
     @Column(nullable = false)
-    private String address;
+    private String city;
+    
+    @Column(nullable = false)
+    private String postalCode;
+    
+    @Column(nullable = false)
+    private String province;
     
     @Column(nullable = false)
     private double latitude;
@@ -30,17 +41,8 @@ public class Warehouse {
     private double longitude;
     
     @Column
-    private int capacity;
+    private String additionalInfo;
     
     @Column
-    private String phoneNumber;
-    
-    @Column
-    private String managerName;
-    
-    @Column(nullable = false)
-    private boolean isActive = true;
-    
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private boolean isDefault = true;
 }

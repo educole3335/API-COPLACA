@@ -10,8 +10,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "warehouses")
-public class Warehouse {
+@Table(name = "product_categories")
+public class ProductCategory {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,27 +20,17 @@ public class Warehouse {
     @Column(nullable = false, unique = true)
     private String name;
     
-    @Column(nullable = false)
-    private String address;
-    
-    @Column(nullable = false)
-    private double latitude;
-    
-    @Column(nullable = false)
-    private double longitude;
+    @Column
+    private String description;
     
     @Column
-    private int capacity;
+    private String icon;
     
-    @Column
-    private String phoneNumber;
-    
-    @Column
-    private String managerName;
+    @Column(columnDefinition = "TEXT")
+    private String color;
     
     @Column(nullable = false)
     private boolean isActive = true;
     
     private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt = LocalDateTime.now();
 }
