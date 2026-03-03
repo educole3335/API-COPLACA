@@ -10,37 +10,31 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "warehouses")
-public class Warehouse {
+@Table(name = "seasonal_offers")
+public class SeasonalOffer {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(nullable = false, unique = true)
-    private String name;
+    @ManyToOne
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
     
     @Column(nullable = false)
-    private String address;
+    private double discountPercentage;
     
     @Column(nullable = false)
-    private double latitude;
+    private String reason; // Abundancia, Próxima caducidad, etc
     
     @Column(nullable = false)
-    private double longitude;
+    private LocalDateTime startDate;
     
-    @Column
-    private int capacity;
-    
-    @Column
-    private String phoneNumber;
-    
-    @Column
-    private String managerName;
+    @Column(nullable = false)
+    private LocalDateTime endDate;
     
     @Column(nullable = false)
     private boolean isActive = true;
     
     private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt = LocalDateTime.now();
 }
