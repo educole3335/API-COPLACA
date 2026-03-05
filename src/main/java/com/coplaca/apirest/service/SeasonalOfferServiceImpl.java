@@ -1,0 +1,78 @@
+package com.coplaca.apirest.service;
+
+import com.coplaca.apirest.dto.SeasonalOfferDTO;
+import com.coplaca.apirest.exception.ResourceNotFoundException;
+import com.coplaca.apirest.entity.SeasonalOffer;
+import com.coplaca.apirest.repository.SeasonalOfferRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@Transactional
+public class SeasonalOfferServiceImpl implements SeasonalOfferService {
+
+    private final SeasonalOfferRepository offerRepository;
+
+    public SeasonalOfferServiceImpl(SeasonalOfferRepository offerRepository) {
+        this.offerRepository = offerRepository;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SeasonalOfferDTO> getAllActiveOffers() {
+        return offerRepository.findByIsActiveTrue()
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SeasonalOfferDTO getOfferById(Long id) {
+        SeasonalOffer offer = offerRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Offer not found with id: " + id));
+        return convertToDTO(offer);
+    }
+
+    @Override
+    public SeasonalOfferDTO createOffer(SeasonalOffer offer) {
+        SeasonalOffer saved = offerRepository.save(offer);
+        return convertToDTO(saved);
+    }
+
+    @Override
+    public SeasonalOfferDTO updateOffer(Long id, SeasonalOffer offerDetails) {
+        SeasonalOffer o = offerRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Offer not found with id: " + id));
+        o.setDiscountPercentage(offerDetails.getDiscountPercentage());
+        o.setReason(offerDetails.getReason());
+        o.setStartDate(offerDetails.getStartDate());
+        o.setEndDate(offerDetails.getEndDate());
+        o.setActive(offerDetails.isActive());
+        offerRepository.save(o);
+        return convertToDTO(o);
+    }
+
+    @Override
+    public void deactivateOffer(Long id) {
+        SeasonalOffer offer = offerRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Offer not found with id: " + id));
+        offer.setActive(false);
+        offerRepository.save(offer);
+    }
+
+    private SeasonalOfferDTO convertToDTO(SeasonalOffer offer) {
+        return SeasonalOfferDTO.builder()
+                .id(offer.getId())
+                .productId(offer.getProduct().getId())
+                .discountPercentage(offer.getDiscountPercentage())
+                .reason(offer.getReason())
+                .startDate(offer.getStartDate())
+                .endDate(offer.getEndDate())
+                .isActive(offer.isActive())
+                .build();
+    }
+}
