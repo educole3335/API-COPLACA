@@ -1,9 +1,10 @@
 package com.coplaca.apirest.service;
 
-import com.coplaca.apirest.dto.request.LoginRequestDto;
+import com.coplaca.apirest.dto.LoginRequest;
+import com.coplaca.apirest.entity.Token;
 
 public interface AuthService {
 
-    boolean loginClient(LoginRequestDto loginRequest);
+    Token loginClient(LoginRequest loginRequest);
     
 }

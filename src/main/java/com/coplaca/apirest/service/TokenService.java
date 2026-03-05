@@ -1,6 +1,6 @@
 package com.coplaca.apirest.service;
 
-public interface JwtService {
+public interface TokenService {
 
     String createToken(String email);
 
