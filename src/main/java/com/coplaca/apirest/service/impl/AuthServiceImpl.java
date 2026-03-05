@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 import com.coplaca.apirest.dto.LoginRequest;
 import com.coplaca.apirest.entity.Token;
@@ -12,6 +13,7 @@ import com.coplaca.apirest.repository.TokenRepository;
 import com.coplaca.apirest.repository.UserRepository;
 import com.coplaca.apirest.service.AuthService;
 
+@Service
 public class AuthServiceImpl implements AuthService {
 
     UserRepository userRepository;
