@@ -1,7 +1,6 @@
 services:
   db:
     image: mysql:8.0
-    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: 1234qwerty
       MYSQL_DATABASE: proyecto
@@ -11,6 +10,18 @@ services:
       - "3306:3306"
     volumes:
       - ./db_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    depends_on:
+      - db
+    environment:
+      PMA_HOST: db
+      PMA_DATABASE: proyecto
+      PMA_USER: root
+      PMA_PASSWORD: 1234qwerty
+    ports:
+      - "8081:80"
 
 volumes:
   db_data:
