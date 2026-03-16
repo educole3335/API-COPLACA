@@ -6,6 +6,8 @@ import com.coplaca.apirest.service.ProductService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -75,7 +77,7 @@ public class ProductController {
     @PatchMapping("/{id}/stock")
     @PreAuthorize("hasAnyRole('LOGISTICS','ADMIN')")
     public ResponseEntity<ProductDTO> adjustStock(@PathVariable Long id,
-                                                  @RequestParam Long delta) {
+                                                  @RequestParam BigDecimal delta) {
         ProductDTO dto = productService.adjustStock(id, delta);
         if (dto != null) {
             return ResponseEntity.ok(dto);

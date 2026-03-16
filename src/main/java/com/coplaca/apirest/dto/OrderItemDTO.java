@@ -14,7 +14,7 @@ public class OrderItemDTO {
     private Long id;
     private Long productId;
     private String productName;
-    private double quantity;
+    private BigDecimal quantity;
     private BigDecimal unitPrice;
     private BigDecimal subtotal;
 }

@@ -9,6 +9,7 @@ import com.coplaca.apirest.repository.SeasonalOfferRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -59,6 +60,9 @@ public class ProductServiceImpl implements ProductService {
     
     @Override
     public Product createProduct(Product product) {
+        if (product.getStockQuantity() == null) {
+            product.setStockQuantity(BigDecimal.ZERO);
+        }
         return productRepository.save(product);
     }
     
@@ -86,11 +90,11 @@ public class ProductServiceImpl implements ProductService {
     }
     
     @Override
-    public ProductDTO adjustStock(Long id, Long quantityChange) {
+    public ProductDTO adjustStock(Long id, BigDecimal quantityChange) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
-        long newQty = product.getStockQuantity() + quantityChange;
-        product.setStockQuantity(Math.max(0, newQty));
+        BigDecimal newQty = product.getStockQuantity().add(quantityChange);
+        product.setStockQuantity(newQty.max(BigDecimal.ZERO));
         Product updated = productRepository.save(product);
         return convertToDTO(updated);
     }

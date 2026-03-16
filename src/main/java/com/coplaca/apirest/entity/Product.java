@@ -33,8 +33,8 @@ public class Product {
     @Column
     private BigDecimal originalPrice;
     
-    @Column(nullable = false)
-    private Long stockQuantity;
+    @Column(nullable = false, precision = 12, scale = 3)
+    private BigDecimal stockQuantity;
     
     @Column
     private String imageUrl;

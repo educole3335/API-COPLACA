@@ -25,8 +25,8 @@ public class OrderItem {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
     
-    @Column(nullable = false)
-    private double quantity; // Quantity in kg or units
+    @Column(nullable = false, precision = 12, scale = 3)
+    private BigDecimal quantity; // Quantity in kg or units
     
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPrice;
