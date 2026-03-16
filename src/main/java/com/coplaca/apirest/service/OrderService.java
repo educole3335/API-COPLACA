@@ -1,131 +1,372 @@
 package com.coplaca.apirest.service;
 
+import com.coplaca.apirest.dto.CreateOrderItemRequest;
+import com.coplaca.apirest.dto.CreateOrderRequest;
 import com.coplaca.apirest.dto.OrderDTO;
 import com.coplaca.apirest.dto.OrderItemDTO;
+import com.coplaca.apirest.entity.Address;
+import com.coplaca.apirest.entity.DeliveryAgentStatus;
 import com.coplaca.apirest.entity.Order;
 import com.coplaca.apirest.entity.OrderItem;
 import com.coplaca.apirest.entity.OrderStatus;
+import com.coplaca.apirest.entity.Product;
 import com.coplaca.apirest.entity.User;
-import com.coplaca.apirest.repository.UserRepository;
+import com.coplaca.apirest.entity.Warehouse;
+import com.coplaca.apirest.exception.ResourceNotFoundException;
+import com.coplaca.apirest.repository.AddressRepository;
 import com.coplaca.apirest.repository.OrderRepository;
+import com.coplaca.apirest.repository.ProductRepository;
+import com.coplaca.apirest.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class OrderService {
-    
+
+    private static final BigDecimal FREE_DELIVERY_THRESHOLD = new BigDecimal("35.00");
+    private static final BigDecimal STANDARD_DELIVERY_FEE = new BigDecimal("4.99");
+    private static final List<OrderStatus> ACTIVE_DELIVERY_STATUSES = List.of(OrderStatus.ASSIGNED, OrderStatus.ACCEPTED, OrderStatus.IN_TRANSIT);
+
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
-    
-    public OrderService(OrderRepository orderRepository, 
-                        UserRepository userRepository) {
+    private final ProductRepository productRepository;
+    private final AddressRepository addressRepository;
+    private final WarehouseService warehouseService;
+
+    public OrderService(OrderRepository orderRepository,
+                        UserRepository userRepository,
+                        ProductRepository productRepository,
+                        AddressRepository addressRepository,
+                        WarehouseService warehouseService) {
         this.orderRepository = orderRepository;
         this.userRepository = userRepository;
+        this.productRepository = productRepository;
+        this.addressRepository = addressRepository;
+        this.warehouseService = warehouseService;
     }
-    
-    public OrderDTO createOrder(Order order) {
-        // Generate unique order number
-        order.setOrderNumber("ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-        order.setStatus(OrderStatus.PENDING);
-        
-        // Calculate totals
-        BigDecimal subtotal = order.getItems().stream()
-                .map(OrderItem::getSubtotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
+
+    public OrderDTO createOrder(String customerEmail, CreateOrderRequest request) {
+        User customer = getActiveUserByEmail(customerEmail);
+        requireRole(customer, "ROLE_CUSTOMER");
+
+        if (request == null || request.getItems() == null || request.getItems().isEmpty()) {
+            throw new IllegalArgumentException("Orders must include at least one product");
+        }
+
+        Address deliveryAddress = resolveDeliveryAddress(customer, request.getDeliveryAddressId());
+        Warehouse warehouse = customer.getWarehouse() != null
+                ? customer.getWarehouse()
+                : warehouseService.assignWarehouse(deliveryAddress);
+        customer.setWarehouse(warehouse);
+
+        Order order = new Order();
+        order.setOrderNumber(generateOrderNumber());
+        order.setCustomer(customer);
+        order.setWarehouse(warehouse);
+        order.setDeliveryAddress(deliveryAddress);
+        order.setCreatedAt(LocalDateTime.now());
+        order.setUpdatedAt(LocalDateTime.now());
+        order.setPaymentMethod(normalizeValue(request.getPaymentMethod(), "CARD"));
+        order.setPaymentStatus(normalizeValue(request.getPaymentStatus(), "PENDING"));
+
+        BigDecimal subtotal = BigDecimal.ZERO;
+        for (CreateOrderItemRequest itemRequest : request.getItems()) {
+            Product product = productRepository.findById(itemRequest.getProductId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + itemRequest.getProductId()));
+
+            if (!product.isActive()) {
+                throw new IllegalArgumentException("Product " + product.getName() + " is not available");
+            }
+
+            BigDecimal quantity = normalizeQuantity(itemRequest.getQuantity());
+            if (product.getStockQuantity().compareTo(quantity) < 0) {
+                throw new IllegalArgumentException("Insufficient stock for product " + product.getName());
+            }
+
+            BigDecimal lineSubtotal = product.getUnitPrice().multiply(quantity).setScale(2, RoundingMode.HALF_UP);
+            OrderItem item = new OrderItem();
+            item.setOrder(order);
+            item.setProduct(product);
+            item.setQuantity(quantity);
+            item.setUnitPrice(product.getUnitPrice());
+            item.setSubtotal(lineSubtotal);
+            order.getItems().add(item);
+
+            product.setStockQuantity(product.getStockQuantity().subtract(quantity));
+            productRepository.save(product);
+            subtotal = subtotal.add(lineSubtotal);
+        }
+
         order.setSubtotal(subtotal);
-        
-        BigDecimal total = subtotal;
-        if (order.getDeliveryFee() != null) {
-            total = total.add(order.getDeliveryFee());
-        }
-        if (order.getDiscount() != null) {
-            total = total.subtract(order.getDiscount());
-        }
-        
-        order.setTotalPrice(total);
-        Order savedOrder = orderRepository.save(order);
-        
-        return convertToDTO(savedOrder);
+        order.setDiscount(BigDecimal.ZERO);
+        order.setDeliveryFee(subtotal.compareTo(FREE_DELIVERY_THRESHOLD) >= 0 ? BigDecimal.ZERO : STANDARD_DELIVERY_FEE);
+        order.setTotalPrice(subtotal.add(order.getDeliveryFee()));
+        order.setStatus("COMPLETED".equals(order.getPaymentStatus()) ? OrderStatus.CONFIRMED : OrderStatus.PENDING);
+        order.setEstimatedDeliveryTime(calculateEstimatedDeliveryTime(warehouse, deliveryAddress, null));
+
+        return convertToDTO(orderRepository.save(order));
     }
-    
-    public OrderDTO getOrderById(Long id) {
-        Optional<Order> order = orderRepository.findById(id);
-        return order.map(this::convertToDTO).orElse(null);
+
+    public OrderDTO getOrderById(Long id, String requesterEmail) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
+        validateOrderAccess(getActiveUserByEmail(requesterEmail), order);
+        return convertToDTO(order);
     }
-    
-    public List<OrderDTO> getOrdersByCustomer(Long customerId) {
-        List<Order> orders = orderRepository.findByCustomerIdOrderByCreatedAtDesc(customerId);
-        return orders.stream()
+
+    public List<OrderDTO> getCurrentUserOrders(String requesterEmail) {
+        User user = getActiveUserByEmail(requesterEmail);
+        List<Order> orders;
+
+        if (hasRole(user, "ROLE_CUSTOMER")) {
+            orders = orderRepository.findByCustomerIdOrderByCreatedAtDesc(user.getId());
+        } else if (hasRole(user, "ROLE_DELIVERY")) {
+            orders = orderRepository.findByDeliveryAgentIdOrderByCreatedAtDesc(user.getId());
+        } else {
+            throw new IllegalArgumentException("Current endpoint is available only for customer and delivery users");
+        }
+
+        return orders.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+
+    public List<OrderDTO> getOrdersByCustomer(Long customerId, String requesterEmail) {
+        User requester = getActiveUserByEmail(requesterEmail);
+        if (!hasRole(requester, "ROLE_ADMIN") && !requester.getId().equals(customerId)) {
+            throw new IllegalArgumentException("You can only access your own orders");
+        }
+        return orderRepository.findByCustomerIdOrderByCreatedAtDesc(customerId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
-    
-    public List<OrderDTO> getPendingOrdersByWarehouse(Long warehouseId) {
-        List<Order> orders = orderRepository.findByWarehouseIdAndStatus(warehouseId, OrderStatus.CONFIRMED);
-        return orders.stream()
+
+    public List<OrderDTO> getPendingOrdersByWarehouse(Long warehouseId, String requesterEmail) {
+        User requester = getActiveUserByEmail(requesterEmail);
+        validateWarehouseAccess(requester, warehouseId);
+
+        return orderRepository.findByWarehouseIdAndStatusInOrderByCreatedAtAsc(
+                        warehouseId,
+                        List.of(OrderStatus.CONFIRMED))
+                .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
-    
-    public OrderDTO assignOrderToDeliveryAgent(Long orderId, Long deliveryAgentId) {
-        Optional<Order> order = orderRepository.findById(orderId);
-        if (order.isPresent()) {
-            Order o = order.get();
-            Optional<User> agent = userRepository.findById(deliveryAgentId);
-            if (agent.isPresent()) {
-                o.setDeliveryAgent(agent.get());
-                o.setStatus(OrderStatus.ASSIGNED);
-                Order saved = orderRepository.save(o);
-                return convertToDTO(saved);
+
+    public OrderDTO assignOrderToDeliveryAgent(Long orderId, Long deliveryAgentId, String requesterEmail) {
+        User requester = getActiveUserByEmail(requesterEmail);
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+        validateWarehouseAccess(requester, order.getWarehouse().getId());
+
+        if (order.getStatus() != OrderStatus.CONFIRMED) {
+            throw new IllegalArgumentException("Only confirmed orders can be assigned to delivery agents");
+        }
+
+        User deliveryAgent = userRepository.findById(deliveryAgentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Delivery agent not found with id: " + deliveryAgentId));
+        requireRole(deliveryAgent, "ROLE_DELIVERY");
+
+        if (deliveryAgent.getWarehouse() == null || !deliveryAgent.getWarehouse().getId().equals(order.getWarehouse().getId())) {
+            throw new IllegalArgumentException("Delivery agent must belong to the same warehouse as the order");
+        }
+
+        if (deliveryAgent.getDeliveryStatus() != DeliveryAgentStatus.AT_WAREHOUSE) {
+            throw new IllegalArgumentException("Delivery agent is not currently available in the warehouse");
+        }
+
+        order.setDeliveryAgent(deliveryAgent);
+        order.setStatus(OrderStatus.ASSIGNED);
+        order.setEstimatedDeliveryTime(calculateEstimatedDeliveryTime(order.getWarehouse(), order.getDeliveryAddress(), deliveryAgent));
+        order.setUpdatedAt(LocalDateTime.now());
+        return convertToDTO(orderRepository.save(order));
+    }
+
+    public OrderDTO updateOrderStatus(Long orderId, OrderStatus status, String requesterEmail) {
+        User requester = getActiveUserByEmail(requesterEmail);
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+
+        if (hasRole(requester, "ROLE_DELIVERY")) {
+            if (order.getDeliveryAgent() == null || !order.getDeliveryAgent().getId().equals(requester.getId())) {
+                throw new IllegalArgumentException("Delivery users can only update their assigned orders");
             }
-        }
-        return null;
-    }
-    
-    public OrderDTO updateOrderStatus(Long orderId, OrderStatus status) {
-        Optional<Order> order = orderRepository.findById(orderId);
-        if (order.isPresent()) {
-            Order o = order.get();
-            o.setStatus(status);
-            if (status == OrderStatus.DELIVERED) {
-                o.setActualDeliveryTime(LocalDateTime.now());
+            applyDeliveryStatusTransition(order, requester, status);
+        } else if (hasRole(requester, "ROLE_LOGISTICS") || hasRole(requester, "ROLE_ADMIN")) {
+            if (hasRole(requester, "ROLE_LOGISTICS")) {
+                validateWarehouseAccess(requester, order.getWarehouse().getId());
             }
-            Order saved = orderRepository.save(o);
-            return convertToDTO(saved);
+            if (status != OrderStatus.CANCELLED && status != OrderStatus.CONFIRMED) {
+                throw new IllegalArgumentException("Logistics and admin users can only confirm or cancel orders here");
+            }
+            order.setStatus(status);
+        } else {
+            throw new IllegalArgumentException("Current user cannot update order statuses");
         }
-        return null;
+
+        order.setUpdatedAt(LocalDateTime.now());
+        return convertToDTO(orderRepository.save(order));
     }
-    
-    public List<OrderDTO> getOrdersByDeliveryAgent(Long deliveryAgentId) {
-        List<Order> orders = orderRepository.findByDeliveryAgentId(deliveryAgentId);
-        return orders.stream()
+
+    public List<OrderDTO> getOrdersByDeliveryAgent(Long deliveryAgentId, String requesterEmail) {
+        User requester = getActiveUserByEmail(requesterEmail);
+        if (hasRole(requester, "ROLE_DELIVERY") && !requester.getId().equals(deliveryAgentId)) {
+            throw new IllegalArgumentException("Delivery users can only access their own orders");
+        }
+
+        if (hasRole(requester, "ROLE_LOGISTICS")) {
+            User deliveryAgent = userRepository.findById(deliveryAgentId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Delivery agent not found with id: " + deliveryAgentId));
+            validateWarehouseAccess(requester, deliveryAgent.getWarehouse().getId());
+        }
+
+        return orderRepository.findByDeliveryAgentIdOrderByCreatedAtDesc(deliveryAgentId).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
-    
-    public List<String> getTopProductsSince(java.time.LocalDateTime since) {
+
+    public List<String> getTopProductsSince(LocalDateTime since) {
         List<Order> orders = orderRepository.findByCreatedAtAfter(since);
-        java.util.Map<String, Double> counts = orders.stream()
-                .flatMap(o -> o.getItems().stream())
+        Map<String, BigDecimal> counts = orders.stream()
+                .flatMap(order -> order.getItems().stream())
                 .collect(Collectors.groupingBy(
                         item -> item.getProduct().getName(),
-                        Collectors.summingDouble(item -> item.getQuantity())
+                        Collectors.reducing(BigDecimal.ZERO, OrderItem::getQuantity, BigDecimal::add)
                 ));
+
         return counts.entrySet().stream()
-                .sorted((e1, e2) -> Double.compare(e2.getValue(), e1.getValue()))
-                .map(e -> e.getKey())
+                .sorted((left, right) -> right.getValue().compareTo(left.getValue()))
+                .map(Map.Entry::getKey)
                 .limit(10)
                 .collect(Collectors.toList());
     }
-    
+
+    private void applyDeliveryStatusTransition(Order order, User deliveryAgent, OrderStatus newStatus) {
+        if (newStatus == OrderStatus.ACCEPTED && order.getStatus() == OrderStatus.ASSIGNED) {
+            order.setStatus(OrderStatus.ACCEPTED);
+            return;
+        }
+
+        if (newStatus == OrderStatus.IN_TRANSIT && order.getStatus() == OrderStatus.ACCEPTED) {
+            deliveryAgent.setDeliveryStatus(DeliveryAgentStatus.DELIVERING);
+            order.setStatus(OrderStatus.IN_TRANSIT);
+            order.setEstimatedDeliveryTime(calculateEstimatedDeliveryTime(order.getWarehouse(), order.getDeliveryAddress(), deliveryAgent));
+            return;
+        }
+
+        if (newStatus == OrderStatus.DELIVERED && order.getStatus() == OrderStatus.IN_TRANSIT) {
+            deliveryAgent.setDeliveryStatus(DeliveryAgentStatus.AT_WAREHOUSE);
+            order.setStatus(OrderStatus.DELIVERED);
+            order.setActualDeliveryTime(LocalDateTime.now());
+            return;
+        }
+
+        throw new IllegalArgumentException("Invalid delivery status transition");
+    }
+
+    private void validateOrderAccess(User requester, Order order) {
+        if (hasRole(requester, "ROLE_ADMIN")) {
+            return;
+        }
+
+        if (hasRole(requester, "ROLE_CUSTOMER") && order.getCustomer().getId().equals(requester.getId())) {
+            return;
+        }
+
+        if (hasRole(requester, "ROLE_DELIVERY") && order.getDeliveryAgent() != null
+                && order.getDeliveryAgent().getId().equals(requester.getId())) {
+            return;
+        }
+
+        if (hasRole(requester, "ROLE_LOGISTICS") && requester.getWarehouse() != null
+                && requester.getWarehouse().getId().equals(order.getWarehouse().getId())) {
+            return;
+        }
+
+        throw new IllegalArgumentException("You do not have access to this order");
+    }
+
+    private void validateWarehouseAccess(User requester, Long warehouseId) {
+        if (hasRole(requester, "ROLE_ADMIN")) {
+            return;
+        }
+
+        if (!hasRole(requester, "ROLE_LOGISTICS")) {
+            throw new IllegalArgumentException("Only logistics and admin users can access warehouse operations");
+        }
+
+        if (requester.getWarehouse() == null || !requester.getWarehouse().getId().equals(warehouseId)) {
+            throw new IllegalArgumentException("You can only manage orders from your own warehouse");
+        }
+    }
+
+    private Address resolveDeliveryAddress(User customer, Long deliveryAddressId) {
+        if (deliveryAddressId == null) {
+            if (customer.getAddress() == null) {
+                throw new IllegalArgumentException("Customer does not have a delivery address configured");
+            }
+            return customer.getAddress();
+        }
+
+        Address address = addressRepository.findById(deliveryAddressId)
+                .orElseThrow(() -> new ResourceNotFoundException("Address not found with id: " + deliveryAddressId));
+        if (customer.getAddress() == null || !customer.getAddress().getId().equals(address.getId())) {
+            throw new IllegalArgumentException("Orders can only be delivered to the customer's registered address");
+        }
+        return address;
+    }
+
+    private User getActiveUserByEmail(String email) {
+        return userRepository.findByEmailAndEnabledTrue(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+    }
+
+    private void requireRole(User user, String roleName) {
+        if (!hasRole(user, roleName)) {
+            throw new IllegalArgumentException("User does not have the required role: " + roleName);
+        }
+    }
+
+    private boolean hasRole(User user, String roleName) {
+        return user.getRoles().stream().anyMatch(role -> role.getName().equals(roleName));
+    }
+
+    private BigDecimal normalizeQuantity(BigDecimal quantity) {
+        if (quantity == null || quantity.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Item quantity must be greater than zero");
+        }
+        return quantity.setScale(3, RoundingMode.HALF_UP);
+    }
+
+    private String normalizeValue(String value, String defaultValue) {
+        return value == null || value.isBlank() ? defaultValue : value.trim().toUpperCase();
+    }
+
+    private String generateOrderNumber() {
+        return "ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+    private LocalDateTime calculateEstimatedDeliveryTime(Warehouse warehouse, Address deliveryAddress, User deliveryAgent) {
+        double distanceKm = warehouseService.calculateDistanceKm(
+                warehouse.getLatitude(),
+                warehouse.getLongitude(),
+                deliveryAddress.getLatitude(),
+                deliveryAddress.getLongitude());
+        long travelMinutes = Math.max(20L, Math.round((distanceKm / 35.0d) * 60.0d));
+        long activeStops = deliveryAgent == null ? 0L : orderRepository.countByDeliveryAgentIdAndStatusIn(deliveryAgent.getId(), ACTIVE_DELIVERY_STATUSES);
+        long stopBuffer = Math.max(0L, activeStops) * 12L;
+        return LocalDateTime.now().plusMinutes(30L + travelMinutes + stopBuffer);
+    }
+
     private OrderDTO convertToDTO(Order order) {
         return OrderDTO.builder()
                 .id(order.getId())
