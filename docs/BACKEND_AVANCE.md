@@ -13,11 +13,11 @@ Objetivo de negocio cubierto:
 ## 2. Cronología de avance (commits)
 
 Hitos principales por commit:
-- 0c3160b: suite de pruebas unitarias JUnit del backend.
-- ee178e2: flujo de pedidos por rol y ETA de entrega.
-- 0bb189a: soporte de stock decimal y venta por peso.
-- 447bcb8: gestión de usuarios internos y autoservicio.
-- b00b5f6: configuración de seguridad y propiedades tipadas JWT.
+-  suite de pruebas unitarias JUnit del backend.
+-  flujo de pedidos por rol y ETA de entrega.
+-  soporte de stock decimal y venta por peso.
+-  gestión de usuarios internos y autoservicio.
+-  configuración de seguridad y propiedades tipadas JWT.
 
 Referencia de historial de cambios: use el historial de Git del repositorio.
 
@@ -181,7 +181,7 @@ Ejecución:
 Estado actual:
 - Pruebas en verde.
 
-## 9. Riesgos y siguientes pasos recomendados
+## 9. Riesgos y siguientes pasos
 
 Riesgos técnicos vigentes:
 - Falta de pruebas de integración HTTP completas por endpoint.
