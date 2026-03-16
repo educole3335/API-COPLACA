@@ -1,5 +1,7 @@
 package com.coplaca.apirest.controller;
 
+import com.coplaca.apirest.dto.UserDTO;
+import com.coplaca.apirest.service.UserService;
 import com.coplaca.apirest.entity.Warehouse;
 import com.coplaca.apirest.service.WarehouseService;
 import org.springframework.http.ResponseEntity;
@@ -13,9 +15,11 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class WarehouseController {
     private final WarehouseService warehouseService;
+    private final UserService userService;
 
-    public WarehouseController(WarehouseService warehouseService) {
+    public WarehouseController(WarehouseService warehouseService, UserService userService) {
         this.warehouseService = warehouseService;
+        this.userService = userService;
     }
 
     @GetMapping
@@ -30,6 +34,12 @@ public class WarehouseController {
             return ResponseEntity.ok(w);
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/{id}/delivery-agents")
+    @PreAuthorize("hasAnyRole('LOGISTICS','ADMIN')")
+    public ResponseEntity<List<UserDTO>> getAvailableDeliveryAgents(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.getAvailableDeliveryAgents(id));
     }
 
     @PostMapping

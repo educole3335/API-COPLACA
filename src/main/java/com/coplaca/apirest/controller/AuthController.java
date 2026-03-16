@@ -8,7 +8,6 @@ import com.coplaca.apirest.entity.Role;
 import com.coplaca.apirest.entity.User;
 import com.coplaca.apirest.repository.RoleRepository;
 import com.coplaca.apirest.service.UserService;
-import com.coplaca.apirest.service.WarehouseService;
 import com.coplaca.apirest.security.JwtTokenProvider;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -28,18 +27,15 @@ public class AuthController {
     
     private final UserService userService;
     private final RoleRepository roleRepository;
-    private final WarehouseService warehouseService;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
     
     public AuthController(UserService userService,
                           RoleRepository roleRepository,
-                          WarehouseService warehouseService,
                           AuthenticationManager authenticationManager,
                           JwtTokenProvider tokenProvider) {
         this.userService = userService;
         this.roleRepository = roleRepository;
-        this.warehouseService = warehouseService;
         this.authenticationManager = authenticationManager;
         this.tokenProvider = tokenProvider;
     }
@@ -85,9 +81,18 @@ public class AuthController {
     public ResponseEntity<LoginResponse> signup(@RequestBody SignUpRequest signUpRequest) {
         try {
             // Check if user already exists
-            Optional<User> existingUser = userService.findByEmail(signUpRequest.getEmail());
-            if (existingUser.isPresent()) {
+            if (userService.emailExists(signUpRequest.getEmail())) {
                 return ResponseEntity.badRequest().build();
+            }
+
+            if (signUpRequest.getAddress() == null) {
+                throw new IllegalArgumentException("Customers must register with a delivery address");
+            }
+
+            String requestedRole = signUpRequest.getRole();
+            if (requestedRole != null && !requestedRole.isBlank() && !"ROLE_CUSTOMER".equalsIgnoreCase(requestedRole)
+                    && !"CUSTOMER".equalsIgnoreCase(requestedRole)) {
+                throw new IllegalArgumentException("Public signup is only available for customer accounts");
             }
             
             // Create new user
@@ -111,22 +116,15 @@ public class AuthController {
                 address.setLongitude(signUpRequest.getAddress().getLongitude());
                 address.setAdditionalInfo(signUpRequest.getAddress().getAdditionalInfo());
                 user.setAddress(address);
-                
-                // Assign nearest warehouse for customers
-                if ("ROLE_CUSTOMER".equals(signUpRequest.getRole())) {
-                    user.setWarehouse(warehouseService.findNearestWarehouse(
-                            address.getLatitude(),
-                            address.getLongitude()
-                    ));
-                }
             }
             
             // Set role
-            String roleName = signUpRequest.getRole() != null ? signUpRequest.getRole() : "ROLE_CUSTOMER";
+            String roleName = "ROLE_CUSTOMER";
             Optional<Role> role = roleRepository.findByName(roleName);
             Set<Role> roles = new HashSet<>();
             role.ifPresent(roles::add);
             user.setRoles(roles);
+            user.setWarehouse(userService.resolveCustomerWarehouse(user.getAddress()));
             
             // Save user
             User savedUser = userService.createUser(user);

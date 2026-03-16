@@ -1,5 +1,6 @@
 package com.coplaca.apirest.service;
 
+import com.coplaca.apirest.entity.Address;
 import com.coplaca.apirest.exception.ResourceNotFoundException;
 import com.coplaca.apirest.entity.Warehouse;
 import com.coplaca.apirest.repository.WarehouseRepository;
@@ -57,6 +58,22 @@ public class WarehouseService {
                     return Double.compare(distance1, distance2);
                 })
                 .orElse(null);
+    }
+
+    public Warehouse assignWarehouse(Address address) {
+        if (address == null) {
+            return warehouseRepository.findFirstByOrderByIdAsc();
+        }
+
+        if (address.getLatitude() == 0 && address.getLongitude() == 0) {
+            return warehouseRepository.findFirstByOrderByIdAsc();
+        }
+
+        return findNearestWarehouse(address.getLatitude(), address.getLongitude());
+    }
+
+    public double calculateDistanceKm(double lat1, double lon1, double lat2, double lon2) {
+        return calculateDistance(lat1, lon1, lat2, lon2);
     }
     
     private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {

@@ -56,9 +56,9 @@ public class User {
     @JoinColumn(name = "warehouse_id")
     private Warehouse warehouse;
     
-    @ManyToOne
-    @JoinColumn(name = "warehouse_id", insertable = false, updatable = false)
-    private Warehouse assignedWarehouse;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private DeliveryAgentStatus deliveryStatus = DeliveryAgentStatus.AT_WAREHOUSE;
     
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();

@@ -1,7 +1,7 @@
 package com.coplaca.apirest.controller;
 
+import com.coplaca.apirest.dto.SignUpRequest;
 import com.coplaca.apirest.dto.UserDTO;
-import com.coplaca.apirest.entity.Role;
 import com.coplaca.apirest.service.OrderService;
 import com.coplaca.apirest.service.UserService;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/admin")
@@ -35,18 +34,17 @@ public class AdminController {
     @PutMapping("/users/{id}/roles")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDTO> changeRoles(@PathVariable Long id, @RequestBody List<String> roleNames) {
-        List<Role> roles = roleNames.stream()
-                .map(r -> {
-                    Role role = new Role();
-                    role.setName(r);
-                    return role;
-                })
-                .collect(Collectors.toList());
-        UserDTO dto = userService.changeRoles(id, Set.copyOf(roles));
+        UserDTO dto = userService.changeRoles(id, Set.copyOf(roleNames));
         if (dto != null) {
             return ResponseEntity.ok(dto);
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/users/internal")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserDTO> createInternalUser(@RequestBody SignUpRequest request) {
+        return ResponseEntity.ok(userService.getUserById(userService.createManagedUser(request).getId()));
     }
 
     @DeleteMapping("/users/{id}")

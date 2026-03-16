@@ -16,5 +16,6 @@ public class SignUpRequest {
     private String lastName;
     private String phoneNumber;
     private AddressDTO address;
+    private Long warehouseId;
     private String role; // ROLE_CUSTOMER, ROLE_DELIVERY, ROLE_LOGISTICS, ROLE_ADMIN
 }

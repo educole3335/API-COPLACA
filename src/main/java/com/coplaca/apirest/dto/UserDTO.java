@@ -1,5 +1,6 @@
 package com.coplaca.apirest.dto;
 
+import com.coplaca.apirest.entity.DeliveryAgentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,5 +21,6 @@ public class UserDTO {
     private Long warehouseId;
     private String warehouseName;
     private java.util.Set<String> roles;
+    private DeliveryAgentStatus deliveryStatus;
     private boolean enabled;
 }
