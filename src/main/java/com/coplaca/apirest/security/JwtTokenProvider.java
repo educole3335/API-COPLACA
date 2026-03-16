@@ -1,21 +1,32 @@
 package com.coplaca.apirest.security;
 
-import io.jsonwebtoken.*;
+import com.coplaca.apirest.config.AppProperties;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+
+import javax.crypto.SecretKey;
 import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
-    
-    @Value("${app.jwtSecret}")
-    private String jwtSecret;
-    
-    @Value("${app.jwtExpirationMs}")
-    private int jwtExpirationMs;
+
+    private final AppProperties appProperties;
+
+    public JwtTokenProvider(AppProperties appProperties) {
+        this.appProperties = appProperties;
+    }
+
+    private SecretKey getSigningKey() {
+        return Keys.hmacShaKeyFor(appProperties.getJwtSecret().getBytes());
+    }
     
     public String generateToken(Authentication authentication) {
         UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
@@ -24,40 +35,40 @@ public class JwtTokenProvider {
     
     public String generateTokenFromEmail(String email) {
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
+        Date expiryDate = new Date(now.getTime() + appProperties.getJwtExpirationMs());
         
         return Jwts.builder()
-                .subject(email)
-                .issuedAt(now)
-                .expiration(expiryDate)
-                .signWith(Keys.hmacShaKeyFor(jwtSecret.getBytes()))
+                .setSubject(email)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
                 .compact();
     }
     
     public String getEmailFromJWT(String token) {
-        return Jwts.parser()
-                .verifyWith(Keys.hmacShaKeyFor(jwtSecret.getBytes()))
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
                 .build()
-                .parseSignedClaims(token)
-                .getPayload()
+                .parseClaimsJws(token)
+                .getBody()
                 .getSubject();
     }
     
     public boolean validateToken(String authToken) {
         try {
-            Jwts.parser()
-                    .verifyWith(Keys.hmacShaKeyFor(jwtSecret.getBytes()))
+            Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
                     .build()
-                    .parseSignedClaims(authToken);
+                    .parseClaimsJws(authToken);
             return true;
-        } catch (SecurityException e) {
-            // invalid signature
-        } catch (MalformedJwtException e) {
-            // invalid token
         } catch (ExpiredJwtException e) {
             // expired token
         } catch (UnsupportedJwtException e) {
             // unsupported jwt
+        } catch (MalformedJwtException e) {
+            // invalid token
+        } catch (JwtException e) {
+            // invalid signature or generic JWT error
         } catch (IllegalArgumentException e) {
             // empty claims
         }
