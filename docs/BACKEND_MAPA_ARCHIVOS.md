@@ -140,5 +140,5 @@ Este documento describe qué hace cada archivo del backend y resalta lo más imp
 - Seguridad de acceso por rol y token JWT en producción.
 - Flujo de pedido con validaciones de negocio por actor.
 - Stock decimal para venta por peso en tienda.
-- Asignación de almacén y ETA para experiencia de entrega.
+- Asignación de almacén y ETA (tiempo estimado de llegada) para experiencia de entrega.
 - Base de tests unitarios para reducir incidencias en futuras entregas.
