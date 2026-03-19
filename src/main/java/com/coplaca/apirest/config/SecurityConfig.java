@@ -29,7 +29,7 @@ public class SecurityConfig {
     }
     
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) {
         return authConfig.getAuthenticationManager();
     }
     
@@ -39,7 +39,7 @@ public class SecurityConfig {
     }
     
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) {
         http
             .cors(withDefaults())
             .csrf(csrf -> csrf.disable())
@@ -53,6 +53,10 @@ public class SecurityConfig {
         
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         
-        return http.build();
+        try {
+            return http.build();
+        } catch (Exception exception) {
+            throw new IllegalStateException("Unable to build SecurityFilterChain", exception);
+        }
     }
 }
