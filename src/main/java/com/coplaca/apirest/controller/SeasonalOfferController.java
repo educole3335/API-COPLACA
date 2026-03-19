@@ -11,7 +11,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/offers")
-@CrossOrigin(origins = "*")
 public class SeasonalOfferController {
     private final SeasonalOfferService offerService;
 
