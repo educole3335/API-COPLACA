@@ -25,8 +25,6 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -398,5 +396,175 @@ public class OrderService {
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())
                 .build();
+    }
+
+    /**
+     * Repartidor acepta una orden asignada
+     */
+    public OrderDTO acceptOrder(Long orderId, String requesterEmail) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+        
+        User requester = getActiveUserByEmail(requesterEmail);
+        requireRole(requester, "ROLE_DELIVERY");
+        
+        if (order.getDeliveryAgent() == null || !order.getDeliveryAgent().getId().equals(requester.getId())) {
+            throw new IllegalArgumentException("You can only accept orders assigned to you");
+        }
+        
+        if (order.getStatus() != OrderStatus.ASSIGNED) {
+            throw new IllegalArgumentException("Only ASSIGNED orders can be accepted");
+        }
+        
+        order.setStatus(OrderStatus.ACCEPTED);
+        order.setUpdatedAt(LocalDateTime.now());
+        return convertToDTO(orderRepository.save(order));
+    }
+
+    /**
+     * Repartidor rechaza una orden
+     */
+    public OrderDTO rejectOrder(Long orderId, String reason, String requesterEmail) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+        
+        User requester = getActiveUserByEmail(requesterEmail);
+        requireRole(requester, "ROLE_DELIVERY");
+        
+        if (order.getDeliveryAgent() == null || !order.getDeliveryAgent().getId().equals(requester.getId())) {
+            throw new IllegalArgumentException("You can only reject orders assigned to you");
+        }
+        
+        if (order.getStatus() != OrderStatus.ASSIGNED && order.getStatus() != OrderStatus.ACCEPTED) {
+            throw new IllegalArgumentException("Only ASSIGNED or ACCEPTED orders can be rejected");
+        }
+        
+        // Volver a estado CONFIRMED para que logística reasigne
+        order.setStatus(OrderStatus.CONFIRMED);
+        order.setDeliveryAgent(null);
+        order.setUpdatedAt(LocalDateTime.now());
+        return convertToDTO(orderRepository.save(order));
+    }
+
+    /**
+     * Confirma que el camión está cargado y listo para partir
+     */
+    public OrderDTO confirmOrderLoaded(Long orderId, String requesterEmail) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+        
+        User requester = getActiveUserByEmail(requesterEmail);
+        requireRole(requester, "ROLE_DELIVERY");
+        
+        if (order.getDeliveryAgent() == null || !order.getDeliveryAgent().getId().equals(requester.getId())) {
+            throw new IllegalArgumentException("You can only confirm loading for your assigned orders");
+        }
+        
+        if (order.getStatus() != OrderStatus.ACCEPTED) {
+            throw new IllegalArgumentException("Only ACCEPTED orders can be confirmed as loaded");
+        }
+        
+        order.setStatus(OrderStatus.IN_TRANSIT);
+        requester.setDeliveryStatus(DeliveryAgentStatus.DELIVERING);
+        order.setUpdatedAt(LocalDateTime.now());
+        return convertToDTO(orderRepository.save(order));
+    }
+
+    /**
+     * Marca una orden como entregada
+     */
+    public OrderDTO deliverOrder(Long orderId, String requesterEmail) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+        
+        User requester = getActiveUserByEmail(requesterEmail);
+        requireRole(requester, "ROLE_DELIVERY");
+        
+        if (order.getDeliveryAgent() == null || !order.getDeliveryAgent().getId().equals(requester.getId())) {
+            throw new IllegalArgumentException("You can only deliver orders assigned to you");
+        }
+        
+        if (order.getStatus() != OrderStatus.IN_TRANSIT) {
+            throw new IllegalArgumentException("Only IN_TRANSIT orders can be marked as delivered");
+        }
+        
+        order.setStatus(OrderStatus.DELIVERED);
+        order.setActualDeliveryTime(LocalDateTime.now());
+        requester.setDeliveryStatus(DeliveryAgentStatus.AT_WAREHOUSE);
+        order.setUpdatedAt(LocalDateTime.now());
+        return convertToDTO(orderRepository.save(order));
+    }
+
+    /**
+     * Cancela una orden
+     */
+    public OrderDTO cancelOrder(Long orderId, String reason, String requesterEmail) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+        
+        User requester = getActiveUserByEmail(requesterEmail);
+        
+        // Clientes solo pueden cancelar sus propios pedidos en ciertos estados
+        if (hasRole(requester, "ROLE_CUSTOMER")) {
+            if (!order.getCustomer().getId().equals(requester.getId())) {
+                throw new IllegalArgumentException("Customers can only cancel their own orders");
+            }
+            if (!List.of(OrderStatus.PENDING, OrderStatus.CONFIRMED).contains(order.getStatus())) {
+                throw new IllegalArgumentException("Customers can only cancel PENDING or CONFIRMED orders");
+            }
+        } else if (!hasRole(requester, "ROLE_ADMIN")) {
+            throw new IllegalArgumentException("You don't have permission to cancel orders");
+        }
+        
+        // Restaurar stock si no salió de almacén
+        if (!List.of(OrderStatus.IN_TRANSIT, OrderStatus.DELIVERED).contains(order.getStatus())) {
+            for (OrderItem item : order.getItems()) {
+                Product product = item.getProduct();
+                product.setStockQuantity(product.getStockQuantity().add(item.getQuantity()));
+                productRepository.save(product);
+            }
+        }
+        
+        order.setStatus(OrderStatus.CANCELLED);
+        order.setUpdatedAt(LocalDateTime.now());
+        return convertToDTO(orderRepository.save(order));
+    }
+
+    /**
+     * Obtiene órdenes confirmadas de un almacén (listas para asignar)
+     */
+    public List<OrderDTO> getConfirmedOrdersByWarehouse(Long warehouseId, String requesterEmail) {
+        User requester = getActiveUserByEmail(requesterEmail);
+        
+        if (hasRole(requester, "ROLE_LOGISTICS")) {
+            validateWarehouseAccess(requester, warehouseId);
+        } else if (!hasRole(requester, "ROLE_ADMIN")) {
+            throw new IllegalArgumentException("Only logistics and admin users can access this");
+        }
+        
+        return orderRepository.findAll().stream()
+                .filter(o -> o.getWarehouse().getId().equals(warehouseId))
+                .filter(o -> o.getStatus() == OrderStatus.CONFIRMED)
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Obtiene órdenes en tránsito de un almacén
+     */
+    public List<OrderDTO> getInTransitOrdersByWarehouse(Long warehouseId, String requesterEmail) {
+        User requester = getActiveUserByEmail(requesterEmail);
+        
+        if (hasRole(requester, "ROLE_LOGISTICS")) {
+            validateWarehouseAccess(requester, warehouseId);
+        } else if (!hasRole(requester, "ROLE_ADMIN")) {
+            throw new IllegalArgumentException("Only logistics and admin users can access this");
+        }
+        
+        return orderRepository.findAll().stream()
+                .filter(o -> o.getWarehouse().getId().equals(warehouseId))
+                .filter(o -> o.getStatus() == OrderStatus.IN_TRANSIT)
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 }
