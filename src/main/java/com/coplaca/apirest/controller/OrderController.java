@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/orders")
-@CrossOrigin(origins = "*")
 public class OrderController {
     
     private final OrderService orderService;
@@ -92,6 +91,100 @@ public class OrderController {
     public ResponseEntity<List<OrderDTO>> getDeliveryAgentOrders(@PathVariable Long deliveryAgentId,
                                                                  Authentication authentication) {
         List<OrderDTO> orders = orderService.getOrdersByDeliveryAgent(deliveryAgentId, authentication.getName());
+        return ResponseEntity.ok(orders);
+    }
+
+    /**
+     * Repartidor acepta una orden asignada
+     */
+    @PutMapping("/{orderId}/accept")
+    @PreAuthorize("hasRole('DELIVERY')")
+    public ResponseEntity<OrderDTO> acceptOrder(@PathVariable Long orderId,
+                                               Authentication authentication) {
+        OrderDTO order = orderService.acceptOrder(orderId, authentication.getName());
+        if (order != null) {
+            return ResponseEntity.ok(order);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    /**
+     * Repartidor rechaza una orden
+     */
+    @PutMapping("/{orderId}/reject")
+    @PreAuthorize("hasRole('DELIVERY')")
+    public ResponseEntity<OrderDTO> rejectOrder(@PathVariable Long orderId,
+                                               @RequestParam(required = false) String reason,
+                                               Authentication authentication) {
+        OrderDTO order = orderService.rejectOrder(orderId, reason, authentication.getName());
+        if (order != null) {
+            return ResponseEntity.ok(order);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    /**
+     * Confirma que el camión está cargado y listo para partir
+     */
+    @PutMapping("/{orderId}/confirm-loaded")
+    @PreAuthorize("hasRole('DELIVERY')")
+    public ResponseEntity<OrderDTO> confirmOrderLoaded(@PathVariable Long orderId,
+                                                       Authentication authentication) {
+        OrderDTO order = orderService.confirmOrderLoaded(orderId, authentication.getName());
+        if (order != null) {
+            return ResponseEntity.ok(order);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    /**
+     * Marca una orden como entregada
+     */
+    @PutMapping("/{orderId}/deliver")
+    @PreAuthorize("hasRole('DELIVERY')")
+    public ResponseEntity<OrderDTO> deliverOrder(@PathVariable Long orderId,
+                                                 Authentication authentication) {
+        OrderDTO order = orderService.deliverOrder(orderId, authentication.getName());
+        if (order != null) {
+            return ResponseEntity.ok(order);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    /**
+     * Cancela una orden (solo si está en estado permitido)
+     */
+    @PutMapping("/{orderId}/cancel")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    public ResponseEntity<OrderDTO> cancelOrder(@PathVariable Long orderId,
+                                               @RequestParam(required = false) String reason,
+                                               Authentication authentication) {
+        OrderDTO order = orderService.cancelOrder(orderId, reason, authentication.getName());
+        if (order != null) {
+            return ResponseEntity.ok(order);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    /**
+     * Obtiene órdenes de un almacén en estado CONFIRMED (listas para asignar)
+     */
+    @GetMapping("/warehouse/{warehouseId}/confirmed")
+    @PreAuthorize("hasAnyRole('LOGISTICS', 'ADMIN')")
+    public ResponseEntity<List<OrderDTO>> getWarehouseConfirmedOrders(@PathVariable Long warehouseId,
+                                                                      Authentication authentication) {
+        List<OrderDTO> orders = orderService.getConfirmedOrdersByWarehouse(warehouseId, authentication.getName());
+        return ResponseEntity.ok(orders);
+    }
+
+    /**
+     * Obtiene órdenes en tránsito del almacén
+     */
+    @GetMapping("/warehouse/{warehouseId}/in-transit")
+    @PreAuthorize("hasAnyRole('LOGISTICS', 'ADMIN')")
+    public ResponseEntity<List<OrderDTO>> getWarehouseInTransitOrders(@PathVariable Long warehouseId,
+                                                                      Authentication authentication) {
+        List<OrderDTO> orders = orderService.getInTransitOrdersByWarehouse(warehouseId, authentication.getName());
         return ResponseEntity.ok(orders);
     }
 }
