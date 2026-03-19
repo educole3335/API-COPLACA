@@ -6,7 +6,6 @@ import com.coplaca.apirest.dto.ProductRecommendationDTO;
 import com.coplaca.apirest.dto.SeasonalOfferDTO;
 import com.coplaca.apirest.entity.Product;
 import com.coplaca.apirest.entity.SeasonalOffer;
-import com.coplaca.apirest.entity.User;
 import com.coplaca.apirest.repository.ProductRepository;
 import com.coplaca.apirest.repository.SeasonalOfferRepository;
 import com.coplaca.apirest.repository.UserRepository;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Servicio de recomendaciones para landing page
@@ -36,20 +34,20 @@ public class RecommendationService {
     private final SeasonalOfferService offerService;
 
     // Categorías de temporada (mes : categoría)
-    private static final Map<Integer, List<Long>> SEASONAL_CATEGORIES = Map.of(
-            1, List.of(3L, 4L, 5L),  // Enero: Cítricos
-            2, List.of(3L, 4L),       // Febrero: Cítricos
-            3, List.of(1L, 3L),       // Marzo: Plátanos, Cítricos
-            4, List.of(1L, 2L),       // Abril: Plátanos, Tropicales
-            5, List.of(1L, 2L, 5L),   // Mayo: Plátanos, Tropicales, Verduras
-            6, List.of(2L, 5L, 6L),   // Junio: Tropicales, Verduras, Fresas
-            7, List.of(2L, 5L, 6L),   // Julio: Tropicales, Verduras, Fresas
-            8, List.of(2L, 5L),       // Agosto: Tropicales, Verduras
-            9, List.of(1L, 2L, 5L),   // Septiembre: Plátanos, Tropicales, Verduras
-            10, List.of(1L, 3L, 5L),  // Octubre: Plátanos, Cítricos, Verduras
-            11, List.of(1L, 3L, 5L),  // Noviembre: Plátanos, Cítricos, Verduras
-            12, List.of(1L, 3L)       // Diciembre: Plátanos, Cítricos
-    );
+        private static final Map<Integer, List<Long>> SEASONAL_CATEGORIES = Map.ofEntries(
+            Map.entry(1, List.of(3L, 4L, 5L)),   // Enero: Cítricos
+            Map.entry(2, List.of(3L, 4L)),       // Febrero: Cítricos
+            Map.entry(3, List.of(1L, 3L)),       // Marzo: Plátanos, Cítricos
+            Map.entry(4, List.of(1L, 2L)),       // Abril: Plátanos, Tropicales
+            Map.entry(5, List.of(1L, 2L, 5L)),   // Mayo: Plátanos, Tropicales, Verduras
+            Map.entry(6, List.of(2L, 5L, 6L)),   // Junio: Tropicales, Verduras, Fresas
+            Map.entry(7, List.of(2L, 5L, 6L)),   // Julio: Tropicales, Verduras, Fresas
+            Map.entry(8, List.of(2L, 5L)),       // Agosto: Tropicales, Verduras
+            Map.entry(9, List.of(1L, 2L, 5L)),   // Septiembre: Plátanos, Tropicales, Verduras
+            Map.entry(10, List.of(1L, 3L, 5L)),  // Octubre: Plátanos, Cítricos, Verduras
+            Map.entry(11, List.of(1L, 3L, 5L)),  // Noviembre: Plátanos, Cítricos, Verduras
+            Map.entry(12, List.of(1L, 3L))       // Diciembre: Plátanos, Cítricos
+        );
 
     public RecommendationService(ProductRepository productRepository,
                                  SeasonalOfferRepository offerRepository,
@@ -115,7 +113,7 @@ public class RecommendationService {
                     dto.setImageUrl(p.getImageUrl());
                     return dto;
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -125,7 +123,7 @@ public class RecommendationService {
         List<ProductRecommendationDTO> recommendations = new ArrayList<>();
 
         try {
-            Optional<User> user = userRepository.findByEmail(userEmail);
+            userRepository.findByEmail(userEmail);
             List<Product> productsInOffers = getProductsOnSale();
             
             // Añadir productos en oferta
@@ -182,7 +180,7 @@ public class RecommendationService {
                         offer.getEndDate().isAfter(LocalDateTime.now()))
                 .map(SeasonalOffer::getProduct)
                 .filter(Product::isActive)
-                .collect(Collectors.toList());
+            .toList();
     }
 
     /**
