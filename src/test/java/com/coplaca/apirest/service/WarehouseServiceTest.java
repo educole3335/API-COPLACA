@@ -1,6 +1,5 @@
 package com.coplaca.apirest.service;
 
-import com.coplaca.apirest.entity.Address;
 import com.coplaca.apirest.entity.Warehouse;
 import com.coplaca.apirest.exception.ResourceNotFoundException;
 import com.coplaca.apirest.repository.WarehouseRepository;
