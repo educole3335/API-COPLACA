@@ -2,7 +2,6 @@ package com.coplaca.apirest.service;
 
 import com.coplaca.apirest.dto.SignUpRequest;
 import com.coplaca.apirest.dto.UserDTO;
-import com.coplaca.apirest.entity.Address;
 import com.coplaca.apirest.entity.DeliveryAgentStatus;
 import com.coplaca.apirest.entity.Role;
 import com.coplaca.apirest.entity.User;
