@@ -95,7 +95,6 @@ class OrderServiceTest {
     @Test
     void assignOrderToDeliveryAgentRequiresConfirmedOrder() {
         User logistics = logistics(2L, 30L);
-        User delivery = delivery(3L, 30L);
         Order order = order(20L, OrderStatus.PENDING, logistics.getWarehouse(), logistics(9L, 30L));
 
         when(userRepository.findByEmailAndEnabledTrue("logistics@coplaca.com")).thenReturn(Optional.of(logistics));
