@@ -1,6 +1,8 @@
 package com.coplaca.apirest.config;
 
 import com.coplaca.apirest.entity.Role;
+import com.coplaca.apirest.repository.ProductCategoryRepository;
+import com.coplaca.apirest.repository.ProductRepository;
 import com.coplaca.apirest.repository.RoleRepository;
 import com.coplaca.apirest.repository.UserRepository;
 import com.coplaca.apirest.repository.WarehouseRepository;
@@ -34,6 +36,12 @@ class DataInitializerTest {
     private UserRepository userRepository;
 
     @Mock
+    private ProductCategoryRepository categoryRepository;
+
+    @Mock
+    private ProductRepository productRepository;
+
+    @Mock
     private PasswordEncoder passwordEncoder;
 
     @Test
@@ -43,14 +51,24 @@ class DataInitializerTest {
         when(roleRepository.findByName(any())).thenReturn(Optional.empty());
         when(roleRepository.save(any(Role.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(warehouseRepository.findByIsActiveTrue()).thenReturn(Collections.emptyList());
-        when(userRepository.findByEmail("admin@coplaca.local")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(any())).thenAnswer(invocation -> {
+            String email = invocation.getArgument(0);
+            if ("admin@coplaca.local".equals(email)) {
+                return Optional.empty();
+            }
+            return Optional.of(new com.coplaca.apirest.entity.User());
+        });
         when(roleRepository.findByName("ROLE_ADMIN")).thenReturn(Optional.of(adminRole()));
         when(passwordEncoder.encode("Admin12345!")).thenReturn("encoded");
+        when(categoryRepository.count()).thenReturn(1L);
+        when(productRepository.count()).thenReturn(1L);
 
         CommandLineRunner runner = initializer.initializeReferenceData(
                 roleRepository,
                 warehouseRepository,
                 userRepository,
+            categoryRepository,
+            productRepository,
                 passwordEncoder,
                 "admin@coplaca.local",
                 "Admin12345!");
