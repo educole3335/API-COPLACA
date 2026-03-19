@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Servicio para cálculo de ETA (Estimated Time of Arrival)
@@ -38,22 +37,21 @@ public class ETAService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
 
-        Address warehouseAddress = order.getWarehouse().getAddress();
         Address deliveryAddress = order.getDeliveryAddress();
 
-        if (warehouseAddress == null || deliveryAddress == null) {
+        if (order.getWarehouse() == null || deliveryAddress == null) {
             return buildDefaultETA(order);
         }
 
-        if (!geolocationService.areCoordinatesValid(warehouseAddress.getLatitude(), warehouseAddress.getLongitude()) ||
+        if (!geolocationService.areCoordinatesValid(order.getWarehouse().getLatitude(), order.getWarehouse().getLongitude()) ||
                 !geolocationService.areCoordinatesValid(deliveryAddress.getLatitude(), deliveryAddress.getLongitude())) {
             return buildDefaultETA(order);
         }
 
         // Calcular distancia
         BigDecimal distanceKm = geolocationService.calculateDistance(
-                warehouseAddress.getLatitude(),
-                warehouseAddress.getLongitude(),
+            order.getWarehouse().getLatitude(),
+            order.getWarehouse().getLongitude(),
                 deliveryAddress.getLatitude(),
                 deliveryAddress.getLongitude()
         );
