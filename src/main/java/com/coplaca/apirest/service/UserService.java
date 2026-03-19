@@ -284,4 +284,11 @@ public class UserService {
                 .enabled(user.isEnabled())
                 .build();
     }
+
+    public UserDTO reactivateUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+        user.setEnabled(true);
+        return convertToDTO(userRepository.save(user));
+    }
 }
