@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Controlador para gestionar categorías de productos
@@ -33,7 +32,7 @@ public class CategoryController {
     public ResponseEntity<List<ProductCategoryDTO>> getAllCategories() {
         List<ProductCategoryDTO> categories = categoryRepository.findAll().stream()
                 .map(this::mapToDTO)
-                .collect(Collectors.toList());
+                .toList();
         return ResponseEntity.ok(categories);
     }
 
@@ -53,8 +52,12 @@ public class CategoryController {
      */
     @PostMapping
     @PreAuthorize("hasAnyRole('LOGISTICS', 'ADMIN')")
-    public ResponseEntity<ProductCategoryDTO> createCategory(@RequestBody ProductCategory category) {
-        ProductCategory saved = categoryRepository.save(category);
+    public ResponseEntity<ProductCategoryDTO> createCategory(@RequestBody ProductCategoryDTO category) {
+        ProductCategory entity = new ProductCategory();
+        entity.setName(category.getName());
+        entity.setDescription(category.getDescription());
+        entity.setIcon(category.getImageUrl());
+        ProductCategory saved = categoryRepository.save(entity);
         return ResponseEntity.ok(mapToDTO(saved));
     }
 
@@ -65,12 +68,12 @@ public class CategoryController {
     @PreAuthorize("hasAnyRole('LOGISTICS', 'ADMIN')")
     public ResponseEntity<ProductCategoryDTO> updateCategory(
             @PathVariable Long id,
-            @RequestBody ProductCategory categoryDetails) {
+            @RequestBody ProductCategoryDTO categoryDetails) {
         return categoryRepository.findById(id)
                 .map(category -> {
                     category.setName(categoryDetails.getName());
                     category.setDescription(categoryDetails.getDescription());
-                    category.setImageUrl(categoryDetails.getImageUrl());
+                    category.setIcon(categoryDetails.getImageUrl());
                     ProductCategory updated = categoryRepository.save(category);
                     return ResponseEntity.ok(mapToDTO(updated));
                 })
@@ -103,7 +106,7 @@ public class CategoryController {
                 .id(category.getId())
                 .name(category.getName())
                 .description(category.getDescription())
-                .imageUrl(category.getImageUrl())
+            .imageUrl(category.getIcon())
                 .productCount(productCount)
                 .build();
     }
