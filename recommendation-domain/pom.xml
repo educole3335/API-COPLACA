@@ -22,7 +22,7 @@
         </dependency>
         <dependency>
             <groupId>com.coplaca</groupId>
-            <artifactId>order-domain</artifactId>
+            <artifactId>user-domain</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

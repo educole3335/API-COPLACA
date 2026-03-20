@@ -11,8 +11,8 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>order-domain</artifactId>
-    <name>order-domain</name>
+    <artifactId>user-domain</artifactId>
+    <name>user-domain</name>
 
     <dependencies>
         <dependency>
@@ -21,13 +21,12 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.coplaca</groupId>
-            <artifactId>user-domain</artifactId>
-            <version>${project.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
+            <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

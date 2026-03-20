@@ -33,6 +33,7 @@
 
 	<modules>
 		<module>product-domain</module>
+		<module>user-domain</module>
 		<module>order-domain</module>
 		<module>recommendation-domain</module>
 		<module>rest-server</module>

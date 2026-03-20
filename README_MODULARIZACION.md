@@ -7,6 +7,7 @@ Transformamos el proyecto de una estructura monolitica por paquetes a una estruc
 Modulos creados:
 
 - product-domain
+- user-domain
 - order-domain
 - recommendation-domain
 - rest-server
@@ -47,7 +48,8 @@ Con esta separacion es mas sencillo:
 ## Estructura objetivo
 
 - product-domain: catalogo de productos, categorias y ofertas
-- order-domain: pedidos, usuarios, almacenes y logistica
+- user-domain: usuarios, roles, direcciones y almacenes
+- order-domain: pedidos y flujo de despacho/entrega
 - recommendation-domain: recomendaciones y contenido de landing
 - rest-server: capa web y seguridad
 
