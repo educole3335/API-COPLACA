@@ -6,7 +6,6 @@ import com.coplaca.apirest.entity.ProductCategory;
 import com.coplaca.apirest.entity.SeasonalOffer;
 import com.coplaca.apirest.exception.ResourceNotFoundException;
 import com.coplaca.apirest.repository.ProductRepository;
-import com.coplaca.apirest.repository.SeasonalOfferRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,7 +28,7 @@ class ProductServiceImplTest {
     private ProductRepository productRepository;
 
     @Mock
-    private SeasonalOfferRepository offerRepository;
+    private SeasonalOfferService offerService;
 
     @InjectMocks
     private ProductServiceImpl productService;
@@ -67,7 +66,7 @@ class ProductServiceImplTest {
         offer.setReason("Abundancia");
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-        when(offerRepository.findByProductIdAndIsActiveTrue(1L)).thenReturn(Optional.of(offer));
+        when(offerService.getActiveOfferByProductId(1L)).thenReturn(Optional.of(offer));
 
         ProductDTO dto = productService.getProductById(1L);
 

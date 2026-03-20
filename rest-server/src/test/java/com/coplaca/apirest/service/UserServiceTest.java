@@ -7,8 +7,6 @@ import com.coplaca.apirest.entity.Role;
 import com.coplaca.apirest.entity.User;
 import com.coplaca.apirest.entity.Warehouse;
 import com.coplaca.apirest.exception.ResourceNotFoundException;
-import com.coplaca.apirest.repository.AddressRepository;
-import com.coplaca.apirest.repository.RoleRepository;
 import com.coplaca.apirest.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,10 +30,10 @@ class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private AddressRepository addressRepository;
+    private AddressService addressService;
 
     @Mock
-    private RoleRepository roleRepository;
+    private RoleService roleService;
 
     @Mock
     private WarehouseService warehouseService;
@@ -57,7 +55,7 @@ class UserServiceTest {
         role.setName("ROLE_DELIVERY");
 
         when(userRepository.findByEmail("delivery@coplaca.com")).thenReturn(Optional.empty());
-        when(roleRepository.findByName("ROLE_DELIVERY")).thenReturn(Optional.of(role));
+        when(roleService.getRoleByName("ROLE_DELIVERY")).thenReturn(role);
 
         assertThrows(IllegalArgumentException.class, () -> userService.createManagedUser(request));
     }
@@ -82,7 +80,7 @@ class UserServiceTest {
         when(userRepository.findByEmail("delivery@coplaca.com")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("1234")).thenReturn("encoded");
         when(warehouseService.getWarehouseById(2L)).thenReturn(warehouse);
-        when(roleRepository.findByName("ROLE_DELIVERY")).thenReturn(Optional.of(role));
+        when(roleService.getRoleByName("ROLE_DELIVERY")).thenReturn(role);
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         User saved = userService.createManagedUser(request);

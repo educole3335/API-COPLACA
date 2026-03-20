@@ -12,10 +12,7 @@ import com.coplaca.apirest.entity.ProductCategory;
 import com.coplaca.apirest.entity.Role;
 import com.coplaca.apirest.entity.User;
 import com.coplaca.apirest.entity.Warehouse;
-import com.coplaca.apirest.repository.AddressRepository;
 import com.coplaca.apirest.repository.OrderRepository;
-import com.coplaca.apirest.repository.ProductRepository;
-import com.coplaca.apirest.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -40,13 +37,13 @@ class OrderServiceTest {
     private OrderRepository orderRepository;
 
     @Mock
-    private UserRepository userRepository;
+    private UserService userService;
 
     @Mock
-    private ProductRepository productRepository;
+    private ProductService productService;
 
     @Mock
-    private AddressRepository addressRepository;
+    private AddressService addressService;
 
     @Mock
     private WarehouseService warehouseService;
@@ -62,9 +59,9 @@ class OrderServiceTest {
         CreateOrderRequest request = new CreateOrderRequest();
         request.setItems(List.of(itemRequest(100L, new BigDecimal("2.500"))));
 
-        when(userRepository.findByEmailAndEnabledTrue("customer@coplaca.com")).thenReturn(Optional.of(customer));
-        when(productRepository.findById(100L)).thenReturn(Optional.of(product));
-        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userService.getUserEntityByEmail("customer@coplaca.com")).thenReturn(customer);
+        when(productService.getProductEntityById(100L)).thenReturn(product);
+        when(productService.saveProduct(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(warehouseService.calculateDistanceKm(any(Double.class), any(Double.class), any(Double.class), any(Double.class))).thenReturn(10.0d);
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -85,8 +82,8 @@ class OrderServiceTest {
         CreateOrderRequest request = new CreateOrderRequest();
         request.setItems(List.of(itemRequest(100L, new BigDecimal("2.000"))));
 
-        when(userRepository.findByEmailAndEnabledTrue("customer@coplaca.com")).thenReturn(Optional.of(customer));
-        when(productRepository.findById(100L)).thenReturn(Optional.of(product));
+        when(userService.getUserEntityByEmail("customer@coplaca.com")).thenReturn(customer);
+        when(productService.getProductEntityById(100L)).thenReturn(product);
 
         assertThrows(IllegalArgumentException.class,
                 () -> orderService.createOrder("customer@coplaca.com", request));
@@ -97,7 +94,7 @@ class OrderServiceTest {
         User logistics = logistics(2L, 30L);
         Order order = order(20L, OrderStatus.PENDING, logistics.getWarehouse(), logistics(9L, 30L));
 
-        when(userRepository.findByEmailAndEnabledTrue("logistics@coplaca.com")).thenReturn(Optional.of(logistics));
+        when(userService.getUserEntityByEmail("logistics@coplaca.com")).thenReturn(logistics);
         when(orderRepository.findById(20L)).thenReturn(Optional.of(order));
 
         assertThrows(IllegalArgumentException.class,
@@ -110,7 +107,7 @@ class OrderServiceTest {
         Order order = order(20L, OrderStatus.IN_TRANSIT, delivery.getWarehouse(), customer(1L));
         order.setDeliveryAgent(delivery);
 
-        when(userRepository.findByEmailAndEnabledTrue("delivery@coplaca.com")).thenReturn(Optional.of(delivery));
+        when(userService.getUserEntityByEmail("delivery@coplaca.com")).thenReturn(delivery);
         when(orderRepository.findById(20L)).thenReturn(Optional.of(order));
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
