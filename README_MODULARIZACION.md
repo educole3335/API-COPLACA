@@ -56,15 +56,45 @@ Con esta separacion es mas sencillo:
 - Compilacion del reactor completa: OK
 - Pruebas del reactor completas: OK
 
-## Como explicarlo en 1 minuto
+## Estructura de capas en cada dominio
+
+Cada módulo de dominio sigue una arquitectura de capas clara:
+
+| Capa | Paquete | Responsabilidad |
+|------|---------|-----------------|
+| **Presentación** | rest-server | Controllers que exponen endpoints HTTP |
+| **API/Transfer** | /api | DTOs que se lanzan al controller |
+| **Negocio** | /service | DomainService que contiene la lógica y llama al repository |
+| **Datos** | /repository | Interfaces JPA que acceden a la DB |
+| **Persistencia** | /entity | Entidades Hibernate (mapeo O/R con la DB) |
+
+### Flujo de datos
+
+```
+Usuario
+  ↓
+Controller (rest-server)
+  ↓
+DTO (api)
+  ↓
+DomainService (service) - Lógica de negocio
+  ↓
+Repository JPA (repo) - Acceso a DB
+  ↓
+Entity Hibernate (entity) - Mapeo de tablas
+  ↓
+Base de Datos
+```
+
+## Explicación sencilla 
 
 "Pasamos de un monolito por paquetes a un monolito modular por dominios usando Maven multi-modulo.
 Ahora cada dominio encapsula su logica, repositorios, DTOs y entidades, mientras rest-server expone solo la capa web.
 Con esto reducimos acoplamiento, mejoramos mantenibilidad, aceleramos diagnostico de errores y dejamos la base preparada para crecer sin reescribir todo."
 
-## Como explicarlo de forma tecnica
+## Explicación tecnica
 
-"El parent pom ahora orquesta un reactor con cuatro modulos. Los servicios y repositorios se movieron a modulos de dominio segun responsabilidad funcional.
+"El parent pom ahora maneja un reactor con cuatro modulos. Los servicios y repositorios se movieron a modulos de dominio segun responsabilidad funcional.
 Los controllers y configuracion web quedaron en rest-server, que depende de los modulos de dominio.
 Se eliminaron placeholders Domain* para evitar duplicidad y deuda tecnica.
 La migracion se verifico con compile y test en todo el reactor, asegurando consistencia funcional."
