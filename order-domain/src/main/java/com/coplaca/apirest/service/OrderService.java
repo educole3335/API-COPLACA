@@ -13,10 +13,7 @@ import com.coplaca.apirest.entity.Product;
 import com.coplaca.apirest.entity.User;
 import com.coplaca.apirest.entity.Warehouse;
 import com.coplaca.apirest.exception.ResourceNotFoundException;
-import com.coplaca.apirest.repository.AddressRepository;
 import com.coplaca.apirest.repository.OrderRepository;
-import com.coplaca.apirest.repository.ProductRepository;
-import com.coplaca.apirest.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,20 +34,20 @@ public class OrderService {
     private static final List<OrderStatus> ACTIVE_DELIVERY_STATUSES = List.of(OrderStatus.ASSIGNED, OrderStatus.ACCEPTED, OrderStatus.IN_TRANSIT);
 
     private final OrderRepository orderRepository;
-    private final UserRepository userRepository;
-    private final ProductRepository productRepository;
-    private final AddressRepository addressRepository;
+    private final UserService userService;
+    private final ProductService productService;
+    private final AddressService addressService;
     private final WarehouseService warehouseService;
 
     public OrderService(OrderRepository orderRepository,
-                        UserRepository userRepository,
-                        ProductRepository productRepository,
-                        AddressRepository addressRepository,
+                        UserService userService,
+                        ProductService productService,
+                        AddressService addressService,
                         WarehouseService warehouseService) {
         this.orderRepository = orderRepository;
-        this.userRepository = userRepository;
-        this.productRepository = productRepository;
-        this.addressRepository = addressRepository;
+        this.userService = userService;
+        this.productService = productService;
+        this.addressService = addressService;
         this.warehouseService = warehouseService;
     }
 
@@ -80,8 +77,7 @@ public class OrderService {
 
         BigDecimal subtotal = BigDecimal.ZERO;
         for (CreateOrderItemRequest itemRequest : request.getItems()) {
-            Product product = productRepository.findById(itemRequest.getProductId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + itemRequest.getProductId()));
+            Product product = productService.getProductEntityById(itemRequest.getProductId());
 
             if (!product.isActive()) {
                 throw new IllegalArgumentException("Product " + product.getName() + " is not available");
@@ -102,7 +98,7 @@ public class OrderService {
             order.getItems().add(item);
 
             product.setStockQuantity(product.getStockQuantity().subtract(quantity));
-            productRepository.save(product);
+            productService.saveProduct(product);
             subtotal = subtotal.add(lineSubtotal);
         }
 
@@ -170,8 +166,7 @@ public class OrderService {
             throw new IllegalArgumentException("Only confirmed orders can be assigned to delivery agents");
         }
 
-        User deliveryAgent = userRepository.findById(deliveryAgentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Delivery agent not found with id: " + deliveryAgentId));
+        User deliveryAgent = userService.getUserEntityById(deliveryAgentId);
         requireRole(deliveryAgent, "ROLE_DELIVERY");
 
         if (deliveryAgent.getWarehouse() == null || !deliveryAgent.getWarehouse().getId().equals(order.getWarehouse().getId())) {
@@ -222,8 +217,7 @@ public class OrderService {
         }
 
         if (hasRole(requester, "ROLE_LOGISTICS")) {
-            User deliveryAgent = userRepository.findById(deliveryAgentId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Delivery agent not found with id: " + deliveryAgentId));
+            User deliveryAgent = userService.getUserEntityById(deliveryAgentId);
             validateWarehouseAccess(requester, deliveryAgent.getWarehouse().getId());
         }
 
@@ -315,8 +309,7 @@ public class OrderService {
             return customer.getAddress();
         }
 
-        Address address = addressRepository.findById(deliveryAddressId)
-                .orElseThrow(() -> new ResourceNotFoundException("Address not found with id: " + deliveryAddressId));
+        Address address = addressService.getAddressById(deliveryAddressId);
         if (customer.getAddress() == null || !customer.getAddress().getId().equals(address.getId())) {
             throw new IllegalArgumentException("Orders can only be delivered to the customer's registered address");
         }
@@ -324,8 +317,7 @@ public class OrderService {
     }
 
     private User getActiveUserByEmail(String email) {
-        return userRepository.findByEmailAndEnabledTrue(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+        return userService.getUserEntityByEmail(email);
     }
 
     private void requireRole(User user, String roleName) {
@@ -521,7 +513,7 @@ public class OrderService {
             for (OrderItem item : order.getItems()) {
                 Product product = item.getProduct();
                 product.setStockQuantity(product.getStockQuantity().add(item.getQuantity()));
-                productRepository.save(product);
+                productService.saveProduct(product);
             }
         }
         

@@ -7,7 +7,9 @@ import com.coplaca.apirest.repository.SeasonalOfferRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +29,22 @@ public class SeasonalOfferServiceImpl implements SeasonalOfferService {
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SeasonalOffer> getCurrentActiveOffers() {
+        LocalDateTime now = LocalDateTime.now();
+        return offerRepository.findByIsActiveTrue().stream()
+                .filter(offer -> offer.getStartDate() != null && offer.getEndDate() != null)
+                .filter(offer -> offer.getStartDate().isBefore(now) && offer.getEndDate().isAfter(now))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<SeasonalOffer> getActiveOfferByProductId(Long productId) {
+        return offerRepository.findByProductIdAndIsActiveTrue(productId);
     }
 
     @Override

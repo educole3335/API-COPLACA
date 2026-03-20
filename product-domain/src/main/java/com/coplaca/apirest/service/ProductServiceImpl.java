@@ -5,7 +5,6 @@ import com.coplaca.apirest.exception.ResourceNotFoundException;
 import com.coplaca.apirest.entity.Product;
 import com.coplaca.apirest.entity.SeasonalOffer;
 import com.coplaca.apirest.repository.ProductRepository;
-import com.coplaca.apirest.repository.SeasonalOfferRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,11 +18,11 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
     
     private final ProductRepository productRepository;
-    private final SeasonalOfferRepository offerRepository;
+    private final SeasonalOfferService offerService;
     
-    public ProductServiceImpl(ProductRepository productRepository, SeasonalOfferRepository offerRepository) {
+    public ProductServiceImpl(ProductRepository productRepository, SeasonalOfferService offerService) {
         this.productRepository = productRepository;
-        this.offerRepository = offerRepository;
+        this.offerService = offerService;
     }
     
     @Override
@@ -33,13 +32,25 @@ public class ProductServiceImpl implements ProductService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Product> getAllActiveProductEntities() {
+        return productRepository.findByIsActiveTrue();
+    }
     
     @Override
     @Transactional(readOnly = true)
     public ProductDTO getProductById(Long id) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+        Product product = getProductEntityById(id);
         return convertToDTO(product);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Product getProductEntityById(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
     }
     
     @Override
@@ -63,6 +74,11 @@ public class ProductServiceImpl implements ProductService {
         if (product.getStockQuantity() == null) {
             product.setStockQuantity(BigDecimal.ZERO);
         }
+        return productRepository.save(product);
+    }
+
+    @Override
+    public Product saveProduct(Product product) {
         return productRepository.save(product);
     }
     
@@ -100,7 +116,7 @@ public class ProductServiceImpl implements ProductService {
     }
     
     private ProductDTO convertToDTO(Product product) {
-        Optional<SeasonalOffer> offer = offerRepository.findByProductIdAndIsActiveTrue(product.getId());
+        Optional<SeasonalOffer> offer = offerService.getActiveOfferByProductId(product.getId());
         
         ProductDTO dto = ProductDTO.builder()
                 .id(product.getId())

@@ -6,9 +6,6 @@ import com.coplaca.apirest.dto.ProductRecommendationDTO;
 import com.coplaca.apirest.dto.SeasonalOfferDTO;
 import com.coplaca.apirest.entity.Product;
 import com.coplaca.apirest.entity.SeasonalOffer;
-import com.coplaca.apirest.repository.ProductRepository;
-import com.coplaca.apirest.repository.SeasonalOfferRepository;
-import com.coplaca.apirest.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,11 +24,9 @@ import java.util.*;
 @Transactional(readOnly = true)
 public class RecommendationService {
 
-    private final ProductRepository productRepository;
-    private final SeasonalOfferRepository offerRepository;
-    private final UserRepository userRepository;
     private final ProductService productService;
     private final SeasonalOfferService offerService;
+    private final UserService userService;
 
     // Categorías de temporada (mes : categoría)
         private static final Map<Integer, List<Long>> SEASONAL_CATEGORIES = Map.ofEntries(
@@ -49,16 +44,12 @@ public class RecommendationService {
             Map.entry(12, List.of(1L, 3L))       // Diciembre: Plátanos, Cítricos
         );
 
-    public RecommendationService(ProductRepository productRepository,
-                                 SeasonalOfferRepository offerRepository,
-                                 UserRepository userRepository,
-                                 ProductService productService,
-                                 SeasonalOfferService offerService) {
-        this.productRepository = productRepository;
-        this.offerRepository = offerRepository;
-        this.userRepository = userRepository;
+    public RecommendationService(ProductService productService,
+                                 SeasonalOfferService offerService,
+                                 UserService userService) {
         this.productService = productService;
         this.offerService = offerService;
+        this.userService = userService;
     }
 
     /**
@@ -98,8 +89,7 @@ public class RecommendationService {
             return productService.getAllActiveProducts();
         }
 
-        return productRepository.findAll().stream()
-                .filter(Product::isActive)
+        return productService.getAllActiveProductEntities().stream()
                 .filter(p -> p.getCategory() != null &&
                         seasonalCategoryIds.contains(p.getCategory().getId()))
                 .limit(8)
@@ -123,14 +113,20 @@ public class RecommendationService {
         List<ProductRecommendationDTO> recommendations = new ArrayList<>();
 
         try {
-            userRepository.findByEmail(userEmail);
+            userService.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + userEmail));
             List<Product> productsInOffers = getProductsOnSale();
+            Map<Long, SeasonalOffer> offerByProduct = offerService.getCurrentActiveOffers().stream()
+                .filter(offer -> offer.getProduct() != null)
+                .collect(java.util.stream.Collectors.toMap(
+                    offer -> offer.getProduct().getId(),
+                    offer -> offer,
+                    (first, second) -> first
+                ));
             
             // Añadir productos en oferta
             for (Product product : productsInOffers.stream().limit(3).toList()) {
-                Optional<SeasonalOffer> offer = offerRepository.findAll().stream()
-                        .filter(o -> o.getProduct().getId().equals(product.getId()))
-                        .findFirst();
+            SeasonalOffer offer = offerByProduct.get(product.getId());
 
                 recommendations.add(ProductRecommendationDTO.builder()
                         .productId(product.getId())
@@ -141,14 +137,17 @@ public class RecommendationService {
                         .stockQuantity(product.getStockQuantity())
                         .reason("ON_SALE")
                         .onSale(true)
-                        .offer(offer.map(this::mapOfferToDTO).orElse(null))
+                        .offer(offer != null ? mapOfferToDTO(offer) : null)
                         .build());
             }
 
             // Rellenar con más productos aleatorios
-            List<Product> randomProducts = productRepository.findAll().stream()
-                    .filter(Product::isActive)
-                    .filter(p -> !productsInOffers.contains(p))
+                    Set<Long> productsInOfferIds = productsInOffers.stream()
+                        .map(Product::getId)
+                        .collect(java.util.stream.Collectors.toSet());
+
+                    List<Product> randomProducts = productService.getAllActiveProductEntities().stream()
+                        .filter(p -> !productsInOfferIds.contains(p.getId()))
                     .limit(5)
                     .toList();
 
@@ -175,11 +174,10 @@ public class RecommendationService {
      * Obtiene productos actualmente en oferta
      */
     public List<Product> getProductsOnSale() {
-        return offerRepository.findAll().stream()
-                .filter(offer -> offer.getStartDate().isBefore(LocalDateTime.now()) &&
-                        offer.getEndDate().isAfter(LocalDateTime.now()))
+        return offerService.getCurrentActiveOffers().stream()
                 .map(SeasonalOffer::getProduct)
-                .filter(Product::isActive)
+            .filter(Objects::nonNull)
+            .filter(Product::isActive)
             .toList();
     }
 

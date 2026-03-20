@@ -8,8 +8,6 @@ import com.coplaca.apirest.entity.Address;
 import com.coplaca.apirest.entity.DeliveryAgentStatus;
 import com.coplaca.apirest.entity.Role;
 import com.coplaca.apirest.entity.User;
-import com.coplaca.apirest.repository.AddressRepository;
-import com.coplaca.apirest.repository.RoleRepository;
 import com.coplaca.apirest.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,19 +24,19 @@ import java.util.stream.Collectors;
 public class UserService {
     
     private final UserRepository userRepository;
-    private final AddressRepository addressRepository;
-    private final RoleRepository roleRepository;
+    private final AddressService addressService;
+    private final RoleService roleService;
     private final WarehouseService warehouseService;
     private final PasswordEncoder passwordEncoder;
     
     public UserService(UserRepository userRepository, 
-                       AddressRepository addressRepository,
-                       RoleRepository roleRepository,
+                       AddressService addressService,
+                       RoleService roleService,
                        WarehouseService warehouseService,
                        PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
-        this.addressRepository = addressRepository;
-        this.roleRepository = roleRepository;
+        this.addressService = addressService;
+        this.roleService = roleService;
         this.warehouseService = warehouseService;
         this.passwordEncoder = passwordEncoder;
     }
@@ -150,7 +148,7 @@ public class UserService {
                 address.setLatitude(newAddress.getLatitude());
                 address.setLongitude(newAddress.getLongitude());
                 address.setAdditionalInfo(newAddress.getAdditionalInfo());
-                addressRepository.save(address);
+                addressService.save(address);
                 if (hasRole(u, "ROLE_CUSTOMER")) {
                     u.setWarehouse(warehouseService.assignWarehouse(address));
                 }
@@ -166,7 +164,7 @@ public class UserService {
                 address.setLatitude(newAddress.getLatitude());
                 address.setLongitude(newAddress.getLongitude());
                 address.setAdditionalInfo(newAddress.getAdditionalInfo());
-                u.setAddress(addressRepository.save(address));
+                u.setAddress(addressService.save(address));
                 if (hasRole(u, "ROLE_CUSTOMER")) {
                     u.setWarehouse(warehouseService.assignWarehouse(address));
                 }
@@ -219,8 +217,7 @@ public class UserService {
     private Set<Role> resolveRoles(Set<String> roleNames) {
         return roleNames.stream()
                 .map(this::normalizeRoleName)
-                .map(name -> roleRepository.findByName(name)
-                        .orElseThrow(() -> new ResourceNotFoundException("Role not found: " + name)))
+            .map(roleService::getRoleByName)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
