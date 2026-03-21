@@ -26,6 +26,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -75,9 +76,9 @@ class AuthControllerTest {
 
         when(userService.emailExists(request.getEmail())).thenReturn(false);
 
-        ResponseEntity<LoginResponse> response = authController.signup(request);
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> authController.signup(request));
+        assertEquals("Public signup is only available for customer accounts", ex.getMessage());
     }
 
     @Test
