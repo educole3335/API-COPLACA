@@ -20,5 +20,5 @@ public class AddressDTO {
     private double latitude;
     private double longitude;
     private String additionalInfo;
-    private boolean isDefault;
+    private Boolean isDefault;
 }
