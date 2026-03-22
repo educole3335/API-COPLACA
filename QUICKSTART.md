@@ -1,73 +1,57 @@
-# 🚀 COPLACA API - Guía Rápida de Inicio
+# COPLACA API - Guia Rapida
 
-## ⚡ Inicio Rápido (30 segundos)
+## Inicio rapido con H2 (recomendado para desarrollo)
 
-```bash
-# 1. Iniciar base de datos
-cd dokersito
+Desde la raiz del repositorio:
+
+```powershell
+.\mvnw.cmd -f api-coplaca\pom.xml -pl rest-server -am spring-boot:run
+```
+
+La API quedara disponible en:
+
+- http://localhost:8080
+
+Consola H2:
+
+- http://localhost:8080/h2-console
+
+## Inicio con MySQL (Docker)
+
+1. Levantar contenedores:
+
+```powershell
+cd doker
 docker-compose up -d
-
-# 2. Esperar 15 segundos (MySQL se está iniciando)
-
-# 3. Ejecutar aplicación
 cd ..
-mvn spring-boot:run
 ```
 
-**¡Listo!** La aplicación estará en http://localhost:8080
+2. Configurar variables de entorno para MySQL y arrancar:
 
----
-
-## 📊 Datos que se Cargan Automáticamente
-
-✅ **3 Almacenes** en Canarias (Tenerife, Gran Canaria, La Palma)  
-✅ **5 Categorías** de productos  
-✅ **20+ Productos** con precios y stock  
-✅ **1 Admin** + **2 Clientes** + **2 Repartidores**  
-✅ **Todas las direcciones** georeferenciadas con GPS  
-
----
-
-## 🔑 Credenciales de Ejemplo
-
-### Admin (Acceso Total)
-```
-📧 admin@coplaca.local
-🔐 Admin12345!
+```powershell
+$env:DB_URL="jdbc:mysql://localhost:3306/proyecto?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+$env:DB_USER="root"
+$env:DB_PASSWORD="1234qwerty"
+$env:DB_DRIVER="com.mysql.cj.jdbc.Driver"
+.\mvnw.cmd -f api-coplaca\pom.xml -pl rest-server -am spring-boot:run
 ```
 
-### Cliente 1
-```
-📧 cliente@example.com
-🔐 Cliente123!
-```
+phpMyAdmin:
 
-### Cliente 2
-```
-📧 maria@example.com
-🔐 Cliente123!
-```
+- http://localhost:8081
 
-### Repartidor 1
-```
-📧 repartidor@example.com
-🔐 Repartidor123!
-```
+## Credenciales de ejemplo
 
-### Repartidor 2
-```
-📧 ana@example.com
-🔐 Repartidor123!
-```
+- Admin: `admin@coplaca.local` / `Admin12345!`
+- Cliente: `cliente@example.com` / `Cliente123!`
+- Cliente: `maria@example.com` / `Maria123!`
+- Repartidor: `repartidor@example.com` / `Repartidor123!`
+- Repartidor: `ana@example.com` / `Ana123!`
 
----
+## Probar login
 
-## 🧪 Probar la API
-
-### Con cURL
 ```bash
-# Login
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:8080/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "cliente@example.com",
@@ -75,27 +59,26 @@ curl -X POST http://localhost:8080/api/auth/login \
   }'
 ```
 
-### Con Postman
-- Usa las credenciales de arriba en el endpoint `/api/auth/login`
+## Datos iniciales que se cargan automaticamente
 
----
+- 4 roles: CUSTOMER, LOGISTICS, DELIVERY, ADMIN
+- 3 almacenes
+- 4 categorias de producto
+- 12 productos base
+- usuarios de ejemplo (admin, clientes, reparto y logistica)
 
-## 🗄️ Acceso a Base de Datos
+## Comandos utiles
 
-### PhpMyAdmin (GUI)
-- **URL:** http://localhost:8081
-- **Usuario:** root
-- **Contraseña:** 1234qwerty
-- **BD:** proyecto
----
+```powershell
+# Compilar el reactor
+.\mvnw.cmd -f api-coplaca\pom.xml clean verify
 
-## 📚 Documentación Completa
+# Ejecutar tests
+.\mvnw.cmd -f api-coplaca\pom.xml test
+```
 
-Para más detalles sobre:
-- ✅ Qué datos se cargan
-- ✅ Cómo personalizar datos
-- ✅ Scripts SQL manuales
-- ✅ Troubleshooting
+## Mas informacion
 
-👉 **Ver:** [DATABASE_INIT_README.md](./DATABASE_INIT_README.md)
+- Ver `DATABASE_INIT_README.md` para detalle de bootstrap de datos.
+- Ver `README.md` para vista general del proyecto.
 
