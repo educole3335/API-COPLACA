@@ -17,8 +17,16 @@ public class AddressDTO {
     private String city;
     private String postalCode;
     private String province;
-    private double latitude;
-    private double longitude;
+    private Double latitude;
+    private Double longitude;
     private String additionalInfo;
     private Boolean isDefault;
+
+    public Boolean getIsDefault() {
+        return isDefault;
+    }
+
+    public void setIsDefault(Boolean isDefault) {
+        this.isDefault = isDefault;
+    }
 }

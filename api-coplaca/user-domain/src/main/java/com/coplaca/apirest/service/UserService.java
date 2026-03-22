@@ -2,6 +2,7 @@ package com.coplaca.apirest.service;
 
 import com.coplaca.apirest.dto.AddressDTO;
 import com.coplaca.apirest.dto.SignUpRequest;
+import com.coplaca.apirest.dto.UpdateUserRequest;
 import com.coplaca.apirest.dto.UserDTO;
 import com.coplaca.apirest.exception.ResourceNotFoundException;
 import com.coplaca.apirest.entity.Address;
@@ -127,33 +128,67 @@ public class UserService {
         return userRepository.save(user);
     }
     
-    public UserDTO updateUser(Long id, User userDetails) {
+    public UserDTO updateUser(Long id, UpdateUserRequest userDetails) {
         Optional<User> user = userRepository.findById(id != null ? id : 0L);
         if (user.isPresent()) {
             User u = user.get();
-            u.setFirstName(userDetails.getFirstName());
-            u.setLastName(userDetails.getLastName());
-            u.setPhoneNumber(userDetails.getPhoneNumber());
-            u.setProfileImage(userDetails.getProfileImage());
+            if (userDetails.getFirstName() != null) {
+                u.setFirstName(userDetails.getFirstName());
+            }
+            if (userDetails.getLastName() != null) {
+                u.setLastName(userDetails.getLastName());
+            }
+            if (userDetails.getPhoneNumber() != null) {
+                u.setPhoneNumber(userDetails.getPhoneNumber());
+            }
+            if (userDetails.getProfileImage() != null) {
+                u.setProfileImage(userDetails.getProfileImage());
+            }
             
             if (userDetails.getAddress() != null && u.getAddress() != null) {
                 Address address = u.getAddress();
-                Address newAddress = userDetails.getAddress();
-                address.setStreet(newAddress.getStreet());
-                address.setStreetNumber(newAddress.getStreetNumber());
-                address.setApartment(newAddress.getApartment());
-                address.setCity(newAddress.getCity());
-                address.setPostalCode(newAddress.getPostalCode());
-                address.setProvince(newAddress.getProvince());
-                address.setLatitude(newAddress.getLatitude());
-                address.setLongitude(newAddress.getLongitude());
-                address.setAdditionalInfo(newAddress.getAdditionalInfo());
+                AddressDTO newAddress = userDetails.getAddress();
+                if (newAddress.getStreet() != null) {
+                    address.setStreet(newAddress.getStreet());
+                }
+                if (newAddress.getStreetNumber() != null) {
+                    address.setStreetNumber(newAddress.getStreetNumber());
+                }
+                if (newAddress.getApartment() != null) {
+                    address.setApartment(newAddress.getApartment());
+                }
+                if (newAddress.getCity() != null) {
+                    address.setCity(newAddress.getCity());
+                }
+                if (newAddress.getPostalCode() != null) {
+                    address.setPostalCode(newAddress.getPostalCode());
+                }
+                if (newAddress.getProvince() != null) {
+                    address.setProvince(newAddress.getProvince());
+                }
+                if (newAddress.getLatitude() != null) {
+                    address.setLatitude(newAddress.getLatitude());
+                }
+                if (newAddress.getLongitude() != null) {
+                    address.setLongitude(newAddress.getLongitude());
+                }
+                if (newAddress.getAdditionalInfo() != null) {
+                    address.setAdditionalInfo(newAddress.getAdditionalInfo());
+                }
+                if (newAddress.getIsDefault() != null) {
+                    address.setDefault(newAddress.getIsDefault());
+                }
                 addressService.save(address);
                 if (hasRole(u, "ROLE_CUSTOMER")) {
                     u.setWarehouse(warehouseService.assignWarehouse(address));
                 }
             } else if (userDetails.getAddress() != null) {
-                Address newAddress = userDetails.getAddress();
+                AddressDTO newAddress = userDetails.getAddress();
+                if (newAddress.getStreet() == null || newAddress.getCity() == null
+                        || newAddress.getPostalCode() == null || newAddress.getProvince() == null
+                        || newAddress.getLatitude() == null || newAddress.getLongitude() == null) {
+                    throw new IllegalArgumentException("Address requires street, city, postalCode, province, latitude and longitude");
+                }
                 Address address = new Address();
                 address.setStreet(newAddress.getStreet());
                 address.setStreetNumber(newAddress.getStreetNumber());
@@ -164,6 +199,9 @@ public class UserService {
                 address.setLatitude(newAddress.getLatitude());
                 address.setLongitude(newAddress.getLongitude());
                 address.setAdditionalInfo(newAddress.getAdditionalInfo());
+                if (newAddress.getIsDefault() != null) {
+                    address.setDefault(newAddress.getIsDefault());
+                }
                 u.setAddress(addressService.save(address));
                 if (hasRole(u, "ROLE_CUSTOMER")) {
                     u.setWarehouse(warehouseService.assignWarehouse(address));
@@ -180,7 +218,7 @@ public class UserService {
         return convertToDTO(getUserEntityByEmail(email));
     }
 
-    public UserDTO updateCurrentUser(String email, User userDetails) {
+    public UserDTO updateCurrentUser(String email, UpdateUserRequest userDetails) {
         User currentUser = getUserEntityByEmail(email);
         return updateUser(currentUser.getId(), userDetails);
     }
@@ -236,9 +274,15 @@ public class UserService {
         address.setCity(addressDTO.getCity());
         address.setPostalCode(addressDTO.getPostalCode());
         address.setProvince(addressDTO.getProvince());
+        if (addressDTO.getLatitude() == null || addressDTO.getLongitude() == null) {
+            throw new IllegalArgumentException("Address latitude and longitude are required");
+        }
         address.setLatitude(addressDTO.getLatitude());
         address.setLongitude(addressDTO.getLongitude());
         address.setAdditionalInfo(addressDTO.getAdditionalInfo());
+        if (addressDTO.getIsDefault() != null) {
+            address.setDefault(addressDTO.getIsDefault());
+        }
         return address;
     }
 

@@ -1,8 +1,8 @@
 package com.coplaca.apirest.controller;
 
 import com.coplaca.apirest.dto.UserDTO;
+import com.coplaca.apirest.dto.UpdateUserRequest;
 import com.coplaca.apirest.entity.DeliveryAgentStatus;
-import com.coplaca.apirest.entity.User;
 import com.coplaca.apirest.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,7 +28,7 @@ public class UserController {
     @PutMapping("/me")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserDTO> updateCurrentUser(Authentication authentication,
-                                                     @RequestBody User userDetails) {
+                                                     @RequestBody UpdateUserRequest userDetails) {
         return ResponseEntity.ok(userService.updateCurrentUser(authentication.getName(), userDetails));
     }
 
@@ -60,7 +60,7 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDTO> updateUser(
             @PathVariable Long id,
-            @RequestBody User userDetails) {
+            @RequestBody UpdateUserRequest userDetails) {
         UserDTO updatedUser = userService.updateUser(id, userDetails);
         if (updatedUser != null) {
             return ResponseEntity.ok(updatedUser);

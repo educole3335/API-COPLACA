@@ -1,8 +1,8 @@
 package com.coplaca.apirest.user.controller;
 
 import com.coplaca.apirest.dto.UserDTO;
+import com.coplaca.apirest.dto.UpdateUserRequest;
 import com.coplaca.apirest.entity.DeliveryAgentStatus;
-import com.coplaca.apirest.entity.User;
 import com.coplaca.apirest.service.UserService;
 import java.util.List;
 import java.util.Set;
@@ -38,7 +38,7 @@ public class UserDomainController {
     }
 
     @PutMapping("/users/{id}")
-    public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
+    public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody UpdateUserRequest userDetails) {
         return ResponseEntity.ok(userService.updateUser(id, userDetails));
     }
 
@@ -59,7 +59,7 @@ public class UserDomainController {
     }
 
     @PutMapping("/users/me")
-    public ResponseEntity<UserDTO> updateCurrentUser(@RequestParam String email, @RequestBody User userDetails) {
+    public ResponseEntity<UserDTO> updateCurrentUser(@RequestParam String email, @RequestBody UpdateUserRequest userDetails) {
         return ResponseEntity.ok(userService.updateCurrentUser(email, userDetails));
     }
 
