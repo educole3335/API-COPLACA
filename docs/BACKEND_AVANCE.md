@@ -1,201 +1,78 @@
-# Backend Coplaca - Informe de avance
+# Backend Coplaca - Informe de avance (actualizado)
 
-## 1. Resumen ejecutivo
+## 1) Resumen ejecutivo
 
-Este documento describe el avance del backend de Coplaca para la venta minorista con reparto a domicilio, incluyendo los cambios funcionales, técnicos y de calidad realizados en la API.
+El backend esta operativo en arquitectura multi-modulo, con autenticacion JWT, gestion de catalogo, usuarios, pedidos y logistica de reparto.
 
-Objetivo de negocio cubierto:
-- Soportar registro y operación de clientes y personal interno.
-- Gestionar pedidos por peso (kg), logística de almacén y reparto.
-- Mejorar seguridad y trazabilidad.
-- Incorporar pruebas unitarias para reducir riesgo de regresión.
+Estado general:
 
-## 2. Cronología de avance (commits)
+- Arquitectura modular consolidada.
+- Seguridad y autorizacion por rol activas.
+- Bootstrap de datos de referencia activo.
+- Suite de pruebas unitarias disponible en `rest-server`.
 
-Hitos principales por commit:
--  suite de pruebas unitarias JUnit del backend.
--  flujo de pedidos por rol y ETA de entrega.
--  soporte de stock decimal y venta por peso.
--  gestión de usuarios internos y autoservicio.
--  configuración de seguridad y propiedades tipadas JWT.
+## 2) Logros tecnicos principales
 
-Referencia de historial de cambios: use el historial de Git del repositorio.
+- Migracion de estructura a Maven multi-modulo por dominio.
+- Separacion de capa HTTP en `rest-server` y logica de negocio por dominios.
+- Seguridad stateless con JWT y reglas de acceso por endpoint/rol.
+- Soporte de stock decimal para venta por peso.
+- Flujo de pedidos con estados y validaciones por actor (cliente, logistica, reparto, admin).
 
-## 3. Arquitectura y configuración base
+## 3) Arquitectura actual
 
-### 3.1 Seguridad y autenticación
+## Modulos
 
-Archivos clave:
-- [SecurityConfig](../src/main/java/com/coplaca/apirest/config/SecurityConfig.java)
-- [UserDetailsConfig](../src/main/java/com/coplaca/apirest/config/UserDetailsConfig.java)
-- [JwtTokenProvider](../src/main/java/com/coplaca/apirest/security/JwtTokenProvider.java)
-- [AppProperties](../src/main/java/com/coplaca/apirest/config/AppProperties.java)
-- [application.properties](../src/main/resources/application.properties)
+- `product-domain`: catalogo, categorias, ofertas y reglas de producto.
+- `user-domain`: usuarios, roles, direccion, estado de repartidor.
+- `order-domain`: pedido, lineas, transiciones y asignaciones.
+- `recommendation-domain`: piezas de recomendaciones/landing.
+- `rest-server`: controladores HTTP, seguridad, bootstrap y configuracion.
 
-Cambio principal:
-- Se consolidó autenticación stateless con JWT, reglas por endpoint y seguridad a nivel método.
+## Seguridad
 
-Fragmento relevante explicado:
+- Login/signup: `POST /auth/login`, `POST /auth/signup`.
+- Endpoints publicos: `GET /products/**`, `GET /offers/**`, `GET /warehouses/**`.
+- Resto de endpoints: autenticacion obligatoria.
 
-    .authorizeHttpRequests(authz -> authz
-        .requestMatchers("/auth/**").permitAll()
-        .requestMatchers(HttpMethod.GET, "/products/**", "/offers/**", "/warehouses/**").permitAll()
-        .anyRequest().authenticated()
-    );
+## 4) Datos de arranque
 
-Qué aporta:
-- Permite acceso público de catálogo.
-- Obliga autenticación en operaciones de negocio sensibles.
+`DataInitializer` crea automaticamente:
 
-### 3.2 Inicialización de datos de referencia
+- Roles base: `ROLE_CUSTOMER`, `ROLE_LOGISTICS`, `ROLE_DELIVERY`, `ROLE_ADMIN`.
+- Almacenes iniciales en Canarias.
+- Categorias y productos base.
+- Cuentas iniciales (admin, clientes, reparto y logistica).
 
-Archivo:
-- [DataInitializer](../src/main/java/com/coplaca/apirest/config/DataInitializer.java)
+## 5) Calidad y pruebas
 
-Cambio principal:
-- Alta automática de roles base, almacenes y usuario admin inicial si no existen.
+Cobertura actual de pruebas unitarias (principalmente en `rest-server`):
 
-Valor para empresa:
-- Reduce tiempo de puesta en marcha de entornos de demo, QA y desarrollo.
+- Autenticacion y JWT.
+- Reglas de negocio de usuarios.
+- Reglas de negocio de productos/stock.
+- Reglas de pedidos y transiciones.
+- Inicializacion de datos de referencia.
 
-## 4. Gestión de usuarios y roles
+Comando de ejecucion:
 
-Archivos clave:
-- [AuthController](../src/main/java/com/coplaca/apirest/controller/AuthController.java)
-- [UserController](../src/main/java/com/coplaca/apirest/controller/UserController.java)
-- [AdminController](../src/main/java/com/coplaca/apirest/controller/AdminController.java)
-- [UserService](../src/main/java/com/coplaca/apirest/service/UserService.java)
-- [UserRepository](../src/main/java/com/coplaca/apirest/repository/UserRepository.java)
-- [User](../src/main/java/com/coplaca/apirest/entity/User.java)
-- [DeliveryAgentStatus](../src/main/java/com/coplaca/apirest/entity/DeliveryAgentStatus.java)
+```powershell
+.\mvnw.cmd -f api-coplaca\pom.xml test
+```
 
-Cambios funcionales:
-- El alta pública se limita a clientes.
-- Domicilio obligatorio para cliente y asignación automática de almacén.
-- Endpoints de autoservicio para perfil y baja de cuenta.
-- Gestión de usuarios internos por administrador.
-- Estado operativo de repartidor (en almacén, repartiendo, fuera de línea).
+## 6) Riesgos y brechas abiertas
 
-Fragmento relevante explicado:
+- Cobertura de integracion HTTP aun limitada en endpoints criticos.
+- Pruebas de concurrencia sobre stock/pedidos pendientes.
+- Falta especificacion OpenAPI publica para consumidores externos.
 
-    if (requestedRole != null && !requestedRole.isBlank() && !"ROLE_CUSTOMER".equalsIgnoreCase(requestedRole)
-            && !"CUSTOMER".equalsIgnoreCase(requestedRole)) {
-        throw new IllegalArgumentException("Public signup is only available for customer accounts");
-    }
+## 7) Proximos pasos recomendados
 
-Qué aporta:
-- Evita escaladas de privilegio por alta pública.
+1. Agregar pruebas de integracion con MockMvc en autenticacion, pedidos y autorizacion por rol.
+2. Publicar contrato OpenAPI y coleccion Postman versionada.
+3. Incluir perfiles de entorno (`dev`, `test`, `prod`) con configuracion explicita de datasource.
+4. Incorporar pipeline CI con build + test automatico por push/PR.
 
-## 5. Catálogo, stock y venta por kilo
+## 8) Estado final
 
-Archivos clave:
-- [Product](../src/main/java/com/coplaca/apirest/entity/Product.java)
-- [OrderItem](../src/main/java/com/coplaca/apirest/entity/OrderItem.java)
-- [ProductDTO](../src/main/java/com/coplaca/apirest/dto/ProductDTO.java)
-- [OrderItemDTO](../src/main/java/com/coplaca/apirest/dto/OrderItemDTO.java)
-- [ProductService](../src/main/java/com/coplaca/apirest/service/ProductService.java)
-- [ProductServiceImpl](../src/main/java/com/coplaca/apirest/service/ProductServiceImpl.java)
-- [ProductRepository](../src/main/java/com/coplaca/apirest/repository/ProductRepository.java)
-- [ProductController](../src/main/java/com/coplaca/apirest/controller/ProductController.java)
-
-Cambios funcionales:
-- Stock y cantidades migradas a decimal para soportar kg.
-- Ajuste de stock con protección para no bajar de cero.
-
-Fragmento relevante explicado:
-
-    BigDecimal newQty = product.getStockQuantity().add(quantityChange);
-    product.setStockQuantity(newQty.max(BigDecimal.ZERO));
-
-Qué aporta:
-- Evita inconsistencias de inventario por operaciones concurrentes o ajustes negativos.
-
-## 6. Pedidos, logística y reparto
-
-Archivos clave:
-- [OrderController](../src/main/java/com/coplaca/apirest/controller/OrderController.java)
-- [OrderService](../src/main/java/com/coplaca/apirest/service/OrderService.java)
-- [OrderRepository](../src/main/java/com/coplaca/apirest/repository/OrderRepository.java)
-- [OrderStatus](../src/main/java/com/coplaca/apirest/entity/OrderStatus.java)
-- [CreateOrderRequest](../src/main/java/com/coplaca/apirest/dto/CreateOrderRequest.java)
-- [CreateOrderItemRequest](../src/main/java/com/coplaca/apirest/dto/CreateOrderItemRequest.java)
-
-Cambios funcionales:
-- Creación de pedido basada en usuario autenticado.
-- Cálculo de subtotal, gastos de envío y total.
-- Descuento de stock al confirmar líneas de pedido.
-- Asignación de pedidos a repartidor por logística.
-- Flujo de estados por rol con validaciones.
-- ETA estimada por distancia y carga activa del repartidor.
-
-Fragmento relevante explicado:
-
-    if (newStatus == OrderStatus.DELIVERED && order.getStatus() == OrderStatus.IN_TRANSIT) {
-        deliveryAgent.setDeliveryStatus(DeliveryAgentStatus.AT_WAREHOUSE);
-        order.setStatus(OrderStatus.DELIVERED);
-        order.setActualDeliveryTime(LocalDateTime.now());
-        return;
-    }
-
-Qué aporta:
-- Cierre operativo completo del ciclo de entrega y actualización del estado del repartidor.
-
-## 7. Manejo de errores y respuestas
-
-Archivo:
-- [GlobalExceptionHandler](../src/main/java/com/coplaca/apirest/exception/GlobalExceptionHandler.java)
-
-Cambios funcionales:
-- Reglas de negocio inválidas devuelven 400.
-- Accesos no autorizados devuelven 403.
-- Recursos inexistentes devuelven 404.
-
-Valor para empresa:
-- Mayor claridad para frontend y soporte en diagnóstico de incidencias.
-
-## 8. Pruebas unitarias incorporadas
-
-Archivos de pruebas:
-- [AuthControllerTest](../src/test/java/com/coplaca/apirest/controller/AuthControllerTest.java)
-- [JwtTokenProviderTest](../src/test/java/com/coplaca/apirest/security/JwtTokenProviderTest.java)
-- [OrderServiceTest](../src/test/java/com/coplaca/apirest/service/OrderServiceTest.java)
-- [ProductServiceImplTest](../src/test/java/com/coplaca/apirest/service/ProductServiceImplTest.java)
-- [UserServiceTest](../src/test/java/com/coplaca/apirest/service/UserServiceTest.java)
-- [WarehouseServiceTest](../src/test/java/com/coplaca/apirest/service/WarehouseServiceTest.java)
-- [DataInitializerTest](../src/test/java/com/coplaca/apirest/config/DataInitializerTest.java)
-- [ApirestApplicationTests](../src/test/java/com/coplaca/apirest/ApirestApplicationTests.java)
-
-Cobertura funcional de pruebas:
-- Login y signup.
-- Generación, parseo y validación de JWT.
-- Validaciones de negocio en pedidos.
-- Reglas de stock decimal.
-- Reglas de creación de usuarios internos.
-- Asignación de almacén y cálculos básicos de distancia.
-- Inicialización de datos de referencia.
-
-Ejecución:
-
-    .\\mvnw.cmd -q test
-
-Estado actual:
-- Pruebas en verde.
-
-## 9. Riesgos y siguientes pasos
-
-Riesgos técnicos vigentes:
-- Falta de pruebas de integración HTTP completas por endpoint.
-- Falta de pruebas de persistencia con escenarios de concurrencia real.
-
-Siguientes pasos propuestos:
-- Añadir pruebas de integración con MockMvc para endpoints críticos.
-- Incorporar cobertura de autorización por rol con casos positivos y negativos.
-- Publicar contrato de API (OpenAPI) para alinear frontend y backend.
-
-## 10. Conclusión
-
-El backend está evolucionado a un estado más robusto para operación real de Coplaca:
-- Seguridad y modelo de roles alineados con negocio.
-- Flujo de pedido-logística-reparto implementado y validado.
-- Soporte de venta por kilo y control de stock decimal.
-- Base de pruebas unitarias estable para continuar el crecimiento del sistema.
+El backend esta listo para desarrollo funcional continuo y pruebas de integracion con frontend, con una base modular mas mantenible y segura.

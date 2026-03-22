@@ -24,7 +24,7 @@ INSERT INTO order_items (order_id, product_id, quantity, price_per_unit, total_p
 
 ```bash
 # 1. Login para obtener token
-TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
+TOKEN=$(curl -s -X POST http://localhost:8080/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "cliente@example.com",
@@ -32,7 +32,7 @@ TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
   }' | jq -r '.accessToken')
 
 # 2. Crear orden
-curl -X POST http://localhost:8080/api/orders \
+curl -X POST http://localhost:8080/orders \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -356,7 +356,7 @@ ORDER BY total_gastado DESC;
 
 4. **Geocercas:** Las coordenadas GPS se pueden usar para definir áreas de entrega
 
-5. **Testing:** Los datos de ejemplo se reinicias cada vez que ejecutas `mvn clean install`
+5. **Testing:** Los datos de ejemplo se cargan cuando la base esta vacia (primera ejecucion o despues de limpiar volumenes)
 
 ---
 
