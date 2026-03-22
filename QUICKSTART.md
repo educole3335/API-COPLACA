@@ -80,5 +80,6 @@ curl -X POST http://localhost:8080/auth/login \
 ## Mas informacion
 
 - Ver `DATABASE_INIT_README.md` para detalle de bootstrap de datos.
+- Ver `docs/API_REFERENCIA.md` para contratos y endpoints de toda la API.
 - Ver `README.md` para vista general del proyecto.
 

@@ -1,6 +1,6 @@
 # API COPLACA
 
-Backend de e-commerce para catalogo, usuarios, pedidos y logistica de reparto.
+Backend de e-commerce de COPLACA para venta minorista de frutas y hortalizas, con gestion de usuarios, pedidos y logistica de reparto.
 
 ## Estado actual
 
@@ -122,6 +122,7 @@ Ejecutar pruebas:
 - `QUICKSTART.md`: guia corta para levantar el proyecto.
 - `DATABASE_INIT_README.md`: detalle de datos de arranque y bootstrap.
 - `README_MODULARIZACION.md`: contexto de la modularizacion.
+- `docs/API_REFERENCIA.md`: referencia completa de endpoints y reglas de acceso.
 - `docs/BACKEND_AVANCE.md`: estado funcional y tecnico del backend.
 - `docs/BACKEND_MAPA_ARCHIVOS.md`: mapa actual de modulos y capas.
 - `docs/DATOS_AVANZADOS.md`: ejemplos SQL/API para pruebas avanzadas.
