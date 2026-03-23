@@ -2,13 +2,6 @@
 
 Este documento incluye ejemplos de datos y consultas para pruebas funcionales de la API.
 
-Importante:
-
-- COPLACA opera con frutas y hortalizas.
-- Los ejemplos de productos deben mantenerse en ese dominio.
-- Evitar datos de snacks, carnes o lacteos.
-
----
 
 ## 1) Crear ordenes de ejemplo
 

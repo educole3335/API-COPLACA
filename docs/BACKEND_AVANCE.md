@@ -66,13 +66,7 @@ Comando de ejecucion:
 - Pruebas de concurrencia sobre stock/pedidos pendientes.
 - Falta especificacion OpenAPI publica para consumidores externos.
 
-## 7) Proximos pasos recomendados
 
-1. Agregar pruebas de integracion con MockMvc en autenticacion, pedidos y autorizacion por rol.
-2. Publicar contrato OpenAPI y coleccion Postman versionada.
-3. Incluir perfiles de entorno (`dev`, `test`, `prod`) con configuracion explicita de datasource.
-4. Incorporar pipeline CI con build + test automatico por push/PR.
-
-## 8) Estado final
+## 7) Estado final
 
 El backend esta listo para desarrollo funcional continuo y pruebas de integracion con frontend, con una base modular mas mantenible y segura.
