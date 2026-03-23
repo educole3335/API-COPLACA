@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -117,6 +118,7 @@ public class DataInitializer {
             }
 
             // Inicializar Productos
+                        Map<String, String> productImages = buildProductImageCatalog();
             if (productRepository.count() == 0) {
                 ProductCategory frutasTropicales = categoryRepository.findByName("Frutas Tropicales").orElseThrow();
                 ProductCategory frutasSubtropicales = categoryRepository.findByName("Frutas Subtropicales").orElseThrow();
@@ -131,7 +133,8 @@ public class DataInitializer {
                         new BigDecimal("2.50"),
                         new BigDecimal("3.00"),
                         new BigDecimal("500"),
-                        frutasTropicales
+                        frutasTropicales,
+                        productImages.get("Plátano de Canarias (IGP)")
                 ));
                 productRepository.save(createProduct(
                         "Mango",
@@ -140,7 +143,8 @@ public class DataInitializer {
                         new BigDecimal("3.80"),
                         new BigDecimal("4.50"),
                         new BigDecimal("200"),
-                        frutasTropicales
+                        frutasTropicales,
+                        productImages.get("Mango")
                 ));
                 productRepository.save(createProduct(
                         "Papaya",
@@ -149,7 +153,8 @@ public class DataInitializer {
                         new BigDecimal("2.90"),
                         new BigDecimal("3.50"),
                         new BigDecimal("150"),
-                        frutasTropicales
+                        frutasTropicales,
+                        productImages.get("Papaya")
                 ));
                 productRepository.save(createProduct(
                         "Piña",
@@ -158,7 +163,8 @@ public class DataInitializer {
                         new BigDecimal("3.50"),
                         new BigDecimal("4.20"),
                         new BigDecimal("180"),
-                        frutasTropicales
+                        frutasTropicales,
+                        productImages.get("Piña")
                 ));
 
                 // FRUTAS SUBTROPICALES
@@ -169,7 +175,8 @@ public class DataInitializer {
                         new BigDecimal("2.20"),
                         new BigDecimal("2.80"),
                         new BigDecimal("250"),
-                        frutasSubtropicales
+                        frutasSubtropicales,
+                        productImages.get("Aguacate")
                 ));
 
                 // OTRAS FRUTAS FRESCAS
@@ -180,7 +187,8 @@ public class DataInitializer {
                         new BigDecimal("6.50"),
                         new BigDecimal("8.00"),
                         new BigDecimal("100"),
-                        otrosFrutas
+                        otrosFrutas,
+                        productImages.get("Sandía")
                 ));
                 productRepository.save(createProduct(
                         "Manzana",
@@ -189,7 +197,8 @@ public class DataInitializer {
                         new BigDecimal("2.80"),
                         new BigDecimal("3.50"),
                         new BigDecimal("300"),
-                        otrosFrutas
+                        otrosFrutas,
+                        productImages.get("Manzana")
                 ));
                 productRepository.save(createProduct(
                         "Naranja",
@@ -198,7 +207,8 @@ public class DataInitializer {
                         new BigDecimal("1.90"),
                         new BigDecimal("2.50"),
                         new BigDecimal("400"),
-                        otrosFrutas
+                        otrosFrutas,
+                        productImages.get("Naranja")
                 ));
                 productRepository.save(createProduct(
                         "Fresa",
@@ -207,7 +217,8 @@ public class DataInitializer {
                         new BigDecimal("3.50"),
                         new BigDecimal("4.50"),
                         new BigDecimal("280"),
-                        otrosFrutas
+                        otrosFrutas,
+                        productImages.get("Fresa")
                 ));
                 productRepository.save(createProduct(
                         "Kiwi",
@@ -216,7 +227,8 @@ public class DataInitializer {
                         new BigDecimal("4.20"),
                         new BigDecimal("5.00"),
                         new BigDecimal("220"),
-                        otrosFrutas
+                        otrosFrutas,
+                        productImages.get("Kiwi")
                 ));
 
                 // ORTALIZAS
@@ -227,7 +239,8 @@ public class DataInitializer {
                         new BigDecimal("2.50"),
                         new BigDecimal("3.20"),
                         new BigDecimal("350"),
-                        ortalizas
+                        ortalizas,
+                        productImages.get("Tomate Local")
                 ));
                 productRepository.save(createProduct(
                         "Lechuga Fresca",
@@ -236,9 +249,12 @@ public class DataInitializer {
                         new BigDecimal("1.50"),
                         new BigDecimal("2.00"),
                         new BigDecimal("400"),
-                        ortalizas
+                        ortalizas,
+                        productImages.get("Lechuga Fresca")
                 ));
             }
+
+            syncProductImages(productRepository, productImages);
 
             // Inicializar Clientes
             if (userRepository.findByEmail("cliente@example.com").isEmpty()) {
@@ -414,8 +430,9 @@ public class DataInitializer {
         return category;
     }
 
-    private Product createProduct(String name, String description, String unit, BigDecimal unitPrice,
-                                  BigDecimal originalPrice, BigDecimal stockQuantity, ProductCategory category) {
+        private Product createProduct(String name, String description, String unit, BigDecimal unitPrice,
+                                                                  BigDecimal originalPrice, BigDecimal stockQuantity, ProductCategory category,
+                                                                  String imageUrl) {
         Product product = new Product();
         product.setName(name);
         product.setDescription(description);
@@ -423,8 +440,50 @@ public class DataInitializer {
         product.setUnitPrice(unitPrice);
         product.setOriginalPrice(originalPrice);
         product.setStockQuantity(stockQuantity);
+                product.setImageUrl(imageUrl);
         product.setCategory(category);
         product.setActive(true);
         return product;
     }
+
+        private Map<String, String> buildProductImageCatalog() {
+                return Map.ofEntries(
+                        Map.entry("Tomate Local", "https://loremflickr.com/800/600/tomato"),
+                        Map.entry("Lechuga Fresca", "https://loremflickr.com/800/600/lettuce")
+                );
+        }
+
+        private Set<String> buildFruitProductNames() {
+                return Set.of(
+                        "Plátano de Canarias (IGP)",
+                        "Mango",
+                        "Papaya",
+                        "Piña",
+                        "Aguacate",
+                        "Sandía",
+                        "Manzana",
+                        "Naranja",
+                        "Fresa",
+                        "Kiwi"
+                );
+        }
+
+        private void syncProductImages(ProductRepository productRepository, Map<String, String> productImages) {
+                Set<String> fruitProducts = buildFruitProductNames();
+                productRepository.findAll().forEach(product -> {
+                        if (fruitProducts.contains(product.getName())) {
+                                if (product.getImageUrl() != null && !product.getImageUrl().isBlank()) {
+                                        product.setImageUrl(null);
+                                        productRepository.save(product);
+                                }
+                                return;
+                        }
+
+                        String imageUrl = productImages.get(product.getName());
+                        if (imageUrl != null && (product.getImageUrl() == null || product.getImageUrl().isBlank())) {
+                                product.setImageUrl(imageUrl);
+                                productRepository.save(product);
+                        }
+                });
+        }
 }
