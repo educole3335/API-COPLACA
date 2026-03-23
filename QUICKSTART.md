@@ -29,6 +29,7 @@ $env:DB_URL="jdbc:mysql://localhost:3306/proyecto?useSSL=false&allowPublicKeyRet
 $env:DB_USER="root"
 $env:DB_PASSWORD="1234qwerty"
 $env:DB_DRIVER="com.mysql.cj.jdbc.Driver"
+$env:JWT_SECRET="Wf9vK2qM7rXc4PzL1nT8uJ5yQe3Hb6Nd0Sa9Vg2Rc7Lm4Xk1Fp8Zh5Dt3Ny6Uv0Qr2Mx9Ls4Tp7Jd1Vb8Cn5Re2Gw9Hk6Yp3Qa0"
 .\mvnw.cmd -f api-coplaca\pom.xml -pl rest-server -am spring-boot:run
 ```
 
