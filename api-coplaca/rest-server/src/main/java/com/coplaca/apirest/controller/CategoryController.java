@@ -4,6 +4,7 @@ import com.coplaca.apirest.dto.ProductCategoryDTO;
 import com.coplaca.apirest.entity.ProductCategory;
 import com.coplaca.apirest.repository.ProductCategoryRepository;
 import com.coplaca.apirest.repository.ProductRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -14,16 +15,11 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/categories")
+@RequiredArgsConstructor
 public class CategoryController {
 
     private final ProductCategoryRepository categoryRepository;
     private final ProductRepository productRepository;
-
-    public CategoryController(ProductCategoryRepository categoryRepository,
-                           ProductRepository productRepository) {
-        this.categoryRepository = categoryRepository;
-        this.productRepository = productRepository;
-    }
 
     /**
      * Obtiene todas las categorías de productos

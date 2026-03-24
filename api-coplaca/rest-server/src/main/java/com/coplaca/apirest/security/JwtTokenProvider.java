@@ -8,6 +8,7 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -16,13 +17,10 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 
 @Component
+@RequiredArgsConstructor
 public class JwtTokenProvider {
 
     private final AppProperties appProperties;
-
-    public JwtTokenProvider(AppProperties appProperties) {
-        this.appProperties = appProperties;
-    }
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(appProperties.getJwtSecret().getBytes());

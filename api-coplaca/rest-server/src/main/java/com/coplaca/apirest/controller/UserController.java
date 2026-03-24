@@ -5,6 +5,7 @@ import com.coplaca.apirest.dto.UserDTO;
 import com.coplaca.apirest.dto.UpdateUserRequest;
 import com.coplaca.apirest.entity.DeliveryAgentStatus;
 import com.coplaca.apirest.service.UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -14,13 +15,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/users")
+@RequiredArgsConstructor
 public class UserController {
-    
+
     private final UserService userService;
-    
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")

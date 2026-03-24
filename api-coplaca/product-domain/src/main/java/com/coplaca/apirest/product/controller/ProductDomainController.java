@@ -8,6 +8,7 @@ import com.coplaca.apirest.service.ProductService;
 import com.coplaca.apirest.service.SeasonalOfferService;
 import java.math.BigDecimal;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,15 +23,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/product-domain")
+@RequiredArgsConstructor
 public class ProductDomainController {
 
     private final ProductService productService;
     private final SeasonalOfferService seasonalOfferService;
-
-    public ProductDomainController(ProductService productService, SeasonalOfferService seasonalOfferService) {
-        this.productService = productService;
-        this.seasonalOfferService = seasonalOfferService;
-    }
 
     @GetMapping("/products")
     public ResponseEntity<List<ProductDTO>> getAllActiveProducts() {

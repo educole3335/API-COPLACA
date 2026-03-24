@@ -4,6 +4,7 @@ import com.coplaca.apirest.dto.SignUpRequest;
 import com.coplaca.apirest.dto.UserDTO;
 import com.coplaca.apirest.service.OrderService;
 import com.coplaca.apirest.service.UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -16,14 +17,11 @@ import java.util.Set;
 
 @RestController
 @RequestMapping("/admin")
+@RequiredArgsConstructor
 public class AdminController {
+
     private final UserService userService;
     private final OrderService orderService;
-
-    public AdminController(UserService userService, OrderService orderService) {
-        this.userService = userService;
-        this.orderService = orderService;
-    }
 
     @GetMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")

@@ -5,6 +5,7 @@ import com.coplaca.apirest.entity.Address;
 import com.coplaca.apirest.entity.Order;
 import com.coplaca.apirest.entity.OrderStatus;
 import com.coplaca.apirest.repository.OrderRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
@@ -20,15 +21,11 @@ import java.util.List;
  */
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class ETAService {
 
     private final GeolocationService geolocationService;
     private final OrderRepository orderRepository;
-
-    public ETAService(GeolocationService geolocationService, OrderRepository orderRepository) {
-        this.geolocationService = geolocationService;
-        this.orderRepository = orderRepository;
-    }
 
     /**
      * Calcula el ETA para un pedido

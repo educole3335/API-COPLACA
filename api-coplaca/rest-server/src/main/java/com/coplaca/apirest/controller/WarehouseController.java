@@ -4,6 +4,7 @@ import com.coplaca.apirest.dto.UserDTO;
 import com.coplaca.apirest.service.UserService;
 import com.coplaca.apirest.entity.Warehouse;
 import com.coplaca.apirest.service.WarehouseService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -12,14 +13,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/warehouses")
+@RequiredArgsConstructor
 public class WarehouseController {
+
     private final WarehouseService warehouseService;
     private final UserService userService;
-
-    public WarehouseController(WarehouseService warehouseService, UserService userService) {
-        this.warehouseService = warehouseService;
-        this.userService = userService;
-    }
 
     @GetMapping
     public ResponseEntity<List<Warehouse>> getAll() {

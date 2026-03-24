@@ -5,6 +5,7 @@ import com.coplaca.apirest.dto.OrderDTO;
 import com.coplaca.apirest.entity.OrderStatus;
 import com.coplaca.apirest.service.OrderService;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,13 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/order-domain")
+@RequiredArgsConstructor
 public class OrderDomainController {
 
     private final OrderService orderService;
-
-    public OrderDomainController(OrderService orderService) {
-        this.orderService = orderService;
-    }
 
     @PostMapping("/orders")
     public ResponseEntity<OrderDTO> createOrder(@RequestParam String customerEmail,

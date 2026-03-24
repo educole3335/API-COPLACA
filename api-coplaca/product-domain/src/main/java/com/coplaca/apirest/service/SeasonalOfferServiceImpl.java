@@ -5,6 +5,7 @@ import com.coplaca.apirest.exception.ResourceNotFoundException;
 import com.coplaca.apirest.entity.SeasonalOffer;
 import com.coplaca.apirest.mapper.SeasonalOfferMapper;
 import com.coplaca.apirest.repository.SeasonalOfferRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,15 +16,11 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class SeasonalOfferServiceImpl implements SeasonalOfferService {
 
     private final SeasonalOfferRepository offerRepository;
     private final SeasonalOfferMapper offerMapper;
-
-    public SeasonalOfferServiceImpl(SeasonalOfferRepository offerRepository, SeasonalOfferMapper offerMapper) {
-        this.offerRepository = offerRepository;
-        this.offerMapper = offerMapper;
-    }
 
     @Override
     @Transactional(readOnly = true)

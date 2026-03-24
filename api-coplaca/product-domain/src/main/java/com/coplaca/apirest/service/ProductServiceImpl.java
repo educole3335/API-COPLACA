@@ -6,6 +6,7 @@ import com.coplaca.apirest.entity.Product;
 import com.coplaca.apirest.entity.SeasonalOffer;
 import com.coplaca.apirest.mapper.ProductMapper;
 import com.coplaca.apirest.repository.ProductRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,17 +17,12 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final SeasonalOfferService offerService;
     private final ProductMapper productMapper;
-
-    public ProductServiceImpl(ProductRepository productRepository, SeasonalOfferService offerService, ProductMapper productMapper) {
-        this.productRepository = productRepository;
-        this.offerService = offerService;
-        this.productMapper = productMapper;
-    }
     
     @Override
     @Transactional(readOnly = true)

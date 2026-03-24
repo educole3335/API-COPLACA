@@ -4,6 +4,7 @@ import com.coplaca.apirest.dto.CreateOrderRequest;
 import com.coplaca.apirest.dto.OrderDTO;
 import com.coplaca.apirest.entity.OrderStatus;
 import com.coplaca.apirest.service.OrderService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -12,13 +13,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/orders")
+@RequiredArgsConstructor
 public class OrderController {
-    
+
     private final OrderService orderService;
-    
-    public OrderController(OrderService orderService) {
-        this.orderService = orderService;
-    }
     
     @PostMapping
     @PreAuthorize("hasRole('CUSTOMER')")

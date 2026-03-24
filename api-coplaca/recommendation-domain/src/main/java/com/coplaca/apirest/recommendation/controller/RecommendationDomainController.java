@@ -5,6 +5,7 @@ import com.coplaca.apirest.dto.ProductDTO;
 import com.coplaca.apirest.dto.ProductRecommendationDTO;
 import com.coplaca.apirest.service.RecommendationService;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -13,13 +14,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/recommendation-domain")
+@RequiredArgsConstructor
 public class RecommendationDomainController {
 
     private final RecommendationService recommendationService;
-
-    public RecommendationDomainController(RecommendationService recommendationService) {
-        this.recommendationService = recommendationService;
-    }
 
     @GetMapping("/landing")
     public ResponseEntity<LandingPageDTO> getLandingPage(@RequestParam(defaultValue = "anonymous") String userEmail) {

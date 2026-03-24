@@ -8,6 +8,7 @@ import com.coplaca.apirest.entity.Product;
 import com.coplaca.apirest.entity.SeasonalOffer;
 import com.coplaca.apirest.mapper.ProductMapper;
 import com.coplaca.apirest.mapper.SeasonalOfferMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ import java.util.*;
 @Service
 @Slf4j
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class RecommendationService {
 
     private final ProductService productService;
@@ -47,18 +49,6 @@ public class RecommendationService {
             Map.entry(11, List.of(1L, 3L, 5L)),  // Noviembre: Plátanos, Cítricos, Verduras
             Map.entry(12, List.of(1L, 3L))       // Diciembre: Plátanos, Cítricos
         );
-
-    public RecommendationService(ProductService productService,
-                                 SeasonalOfferService offerService,
-                                 UserService userService,
-                                 ProductMapper productMapper,
-                                 SeasonalOfferMapper offerMapper) {
-        this.productService = productService;
-        this.offerService = offerService;
-        this.userService = userService;
-        this.productMapper = productMapper;
-        this.offerMapper = offerMapper;
-    }
 
     /**
      * Genera contenido para la landing page

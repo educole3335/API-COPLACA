@@ -3,18 +3,16 @@ package com.coplaca.apirest.service;
 import com.coplaca.apirest.entity.Address;
 import com.coplaca.apirest.exception.ResourceNotFoundException;
 import com.coplaca.apirest.repository.AddressRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class AddressService {
 
     private final AddressRepository addressRepository;
-
-    public AddressService(AddressRepository addressRepository) {
-        this.addressRepository = addressRepository;
-    }
 
     @Transactional(readOnly = true)
     public Address getAddressById(Long id) {

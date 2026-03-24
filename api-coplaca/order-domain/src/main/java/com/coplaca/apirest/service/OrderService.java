@@ -14,6 +14,7 @@ import com.coplaca.apirest.entity.Warehouse;
 import com.coplaca.apirest.exception.ResourceNotFoundException;
 import com.coplaca.apirest.mapper.OrderMapper;
 import com.coplaca.apirest.repository.OrderRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class OrderService {
 
     private static final BigDecimal FREE_DELIVERY_THRESHOLD = new BigDecimal("35.00");
@@ -42,20 +44,6 @@ public class OrderService {
     private final AddressService addressService;
     private final WarehouseService warehouseService;
     private final OrderMapper orderMapper;
-
-    public OrderService(OrderRepository orderRepository,
-                        UserService userService,
-                        ProductService productService,
-                        AddressService addressService,
-                        WarehouseService warehouseService,
-                        OrderMapper orderMapper) {
-        this.orderRepository = orderRepository;
-        this.userService = userService;
-        this.productService = productService;
-        this.addressService = addressService;
-        this.warehouseService = warehouseService;
-        this.orderMapper = orderMapper;
-    }
 
     public OrderDTO createOrder(String customerEmail, CreateOrderRequest request) {
         User customer = getActiveUserByEmail(customerEmail);
@@ -568,7 +556,7 @@ public class OrderService {
      */
     public List<OrderDTO> getInTransitOrdersByWarehouse(Long warehouseId, String requesterEmail) {
         User requester = getActiveUserByEmail(requesterEmail);
-        
+        // TODO. Usar enum
         if (hasRole(requester, "ROLE_LOGISTICS")) {
             validateWarehouseAccess(requester, warehouseId);
         } else if (!hasRole(requester, "ROLE_ADMIN")) {

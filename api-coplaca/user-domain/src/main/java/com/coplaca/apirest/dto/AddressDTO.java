@@ -21,12 +21,4 @@ public class AddressDTO {
     private Double longitude;
     private String additionalInfo;
     private Boolean isDefault;
-
-    public Boolean getIsDefault() {
-        return isDefault;
-    }
-
-    public void setIsDefault(Boolean isDefault) {
-        this.isDefault = isDefault;
-    }
 }

@@ -6,6 +6,7 @@ import com.coplaca.apirest.entity.DeliveryAgentStatus;
 import com.coplaca.apirest.service.UserService;
 import java.util.List;
 import java.util.Set;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,13 +20,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/user-domain")
+@RequiredArgsConstructor
 public class UserDomainController {
 
     private final UserService userService;
-
-    public UserDomainController(UserService userService) {
-        this.userService = userService;
-    }
 
     @GetMapping("/users")
     public ResponseEntity<List<UserDTO>> getAllUsers() {

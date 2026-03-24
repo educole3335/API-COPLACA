@@ -4,19 +4,17 @@ import com.coplaca.apirest.entity.Address;
 import com.coplaca.apirest.exception.ResourceNotFoundException;
 import com.coplaca.apirest.entity.Warehouse;
 import com.coplaca.apirest.repository.WarehouseRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class WarehouseService {
-    
+
     private final WarehouseRepository warehouseRepository;
-    
-    public WarehouseService(WarehouseRepository warehouseRepository) {
-        this.warehouseRepository = warehouseRepository;
-    }
     
     public List<Warehouse> getAllWarehouses() {
         return warehouseRepository.findByIsActiveTrue();
