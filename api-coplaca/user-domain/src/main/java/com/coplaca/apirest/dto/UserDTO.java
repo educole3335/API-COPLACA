@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,6 +19,8 @@ public class UserDTO {
     private String lastName;
     private String phoneNumber;
     private String profileImage;
+    private String profileInitial;
+    private BigDecimal accountBalance;
     private AddressDTO address;
     private Long warehouseId;
     private String warehouseName;
