@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -35,8 +34,6 @@ public class OrderService {
     private static final BigDecimal FREE_DELIVERY_THRESHOLD = new BigDecimal("35.00");
     private static final BigDecimal STANDARD_DELIVERY_FEE = new BigDecimal("4.99");
     private static final List<OrderStatus> ACTIVE_DELIVERY_STATUSES = List.of(OrderStatus.ASSIGNED, OrderStatus.ACCEPTED, OrderStatus.IN_TRANSIT);
-    private static final List<String> CHECKOUT_PAYMENT_METHODS = List.of("PRESENTIAL", "CARD", "BALANCE");
-    private static final List<String> PAYMENT_STATUSES = List.of("PENDING", "COMPLETED", "FAILED");
 
     private final OrderRepository orderRepository;
     private final UserService userService;
@@ -66,8 +63,8 @@ public class OrderService {
         order.setDeliveryAddress(deliveryAddress);
         order.setCreatedAt(LocalDateTime.now());
         order.setUpdatedAt(LocalDateTime.now());
-        String paymentMethod = normalizePaymentMethod(request.getPaymentMethod());
-        order.setPaymentMethod(paymentMethod);
+        order.setPaymentMethod(normalizeValue(request.getPaymentMethod(), "CARD"));
+        order.setPaymentStatus(normalizeValue(request.getPaymentStatus(), "PENDING"));
 
         BigDecimal subtotal = BigDecimal.ZERO;
         for (CreateOrderItemRequest itemRequest : request.getItems()) {
@@ -100,29 +97,10 @@ public class OrderService {
         order.setDiscount(BigDecimal.ZERO);
         order.setDeliveryFee(subtotal.compareTo(FREE_DELIVERY_THRESHOLD) >= 0 ? BigDecimal.ZERO : STANDARD_DELIVERY_FEE);
         order.setTotalPrice(subtotal.add(order.getDeliveryFee()));
-
-        if ("BALANCE".equals(paymentMethod)) {
-            BigDecimal availableBalance = normalizeMoney(customer.getAccountBalance());
-            BigDecimal totalPrice = normalizeMoney(order.getTotalPrice());
-            if (availableBalance.compareTo(totalPrice) < 0) {
-                throw new IllegalArgumentException("Insufficient account balance for this payment method");
-            }
-            customer.setAccountBalance(availableBalance.subtract(totalPrice).setScale(2, RoundingMode.HALF_UP));
-            order.setPaymentStatus("COMPLETED");
-            order.setStatus(OrderStatus.CONFIRMED);
-        } else {
-            String paymentStatus = normalizePaymentStatus(request.getPaymentStatus());
-            order.setPaymentStatus(paymentStatus);
-            order.setStatus("COMPLETED".equals(paymentStatus) ? OrderStatus.CONFIRMED : OrderStatus.PENDING);
-        }
-
+        order.setStatus("COMPLETED".equals(order.getPaymentStatus()) ? OrderStatus.CONFIRMED : OrderStatus.PENDING);
         order.setEstimatedDeliveryTime(calculateEstimatedDeliveryTime(warehouse, deliveryAddress, null));
 
         return convertToDTO(orderRepository.save(order));
-    }
-
-    public List<String> getCheckoutPaymentMethods() {
-        return new ArrayList<>(CHECKOUT_PAYMENT_METHODS);
     }
 
     public OrderDTO getOrderById(Long id, String requesterEmail) {
@@ -352,32 +330,6 @@ public class OrderService {
 
     private String normalizeValue(String value, String defaultValue) {
         return value == null || value.isBlank() ? defaultValue : value.trim().toUpperCase();
-    }
-
-    private String normalizePaymentMethod(String paymentMethod) {
-        String normalized = normalizeValue(paymentMethod, "CARD");
-        if ("CASH".equals(normalized) || "CASH_ON_DELIVERY".equals(normalized)) {
-            normalized = "PRESENTIAL";
-        }
-        if (!CHECKOUT_PAYMENT_METHODS.contains(normalized)) {
-            throw new IllegalArgumentException("Unsupported payment method. Allowed methods: " + CHECKOUT_PAYMENT_METHODS);
-        }
-        return normalized;
-    }
-
-    private String normalizePaymentStatus(String paymentStatus) {
-        String normalized = normalizeValue(paymentStatus, "PENDING");
-        if (!PAYMENT_STATUSES.contains(normalized)) {
-            throw new IllegalArgumentException("Unsupported payment status. Allowed statuses: " + PAYMENT_STATUSES);
-        }
-        return normalized;
-    }
-
-    private BigDecimal normalizeMoney(BigDecimal amount) {
-        if (amount == null) {
-            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
-        }
-        return amount.setScale(2, RoundingMode.HALF_UP);
     }
 
     private String generateOrderNumber() {
