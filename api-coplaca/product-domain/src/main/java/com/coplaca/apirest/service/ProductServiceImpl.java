@@ -56,6 +56,9 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public List<ProductDTO> searchProducts(String query) {
+        if (query == null || query.isBlank()) {
+            return getAllActiveProducts();
+        }
         return productRepository.searchByName(query).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
