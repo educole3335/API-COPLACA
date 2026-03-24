@@ -3,7 +3,6 @@ package com.coplaca.apirest.service;
 import com.coplaca.apirest.dto.CreateOrderItemRequest;
 import com.coplaca.apirest.dto.CreateOrderRequest;
 import com.coplaca.apirest.dto.OrderDTO;
-import com.coplaca.apirest.dto.OrderItemDTO;
 import com.coplaca.apirest.entity.Address;
 import com.coplaca.apirest.entity.DeliveryAgentStatus;
 import com.coplaca.apirest.entity.Order;
@@ -13,6 +12,7 @@ import com.coplaca.apirest.entity.Product;
 import com.coplaca.apirest.entity.User;
 import com.coplaca.apirest.entity.Warehouse;
 import com.coplaca.apirest.exception.ResourceNotFoundException;
+import com.coplaca.apirest.mapper.OrderMapper;
 import com.coplaca.apirest.repository.OrderRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,17 +41,20 @@ public class OrderService {
     private final ProductService productService;
     private final AddressService addressService;
     private final WarehouseService warehouseService;
+    private final OrderMapper orderMapper;
 
     public OrderService(OrderRepository orderRepository,
                         UserService userService,
                         ProductService productService,
                         AddressService addressService,
-                        WarehouseService warehouseService) {
+                        WarehouseService warehouseService,
+                        OrderMapper orderMapper) {
         this.orderRepository = orderRepository;
         this.userService = userService;
         this.productService = productService;
         this.addressService = addressService;
         this.warehouseService = warehouseService;
+        this.orderMapper = orderMapper;
     }
 
     public OrderDTO createOrder(String customerEmail, CreateOrderRequest request) {
@@ -406,36 +409,7 @@ public class OrderService {
     }
 
     private OrderDTO convertToDTO(Order order) {
-        return OrderDTO.builder()
-                .id(order.getId())
-                .orderNumber(order.getOrderNumber())
-                .customerId(order.getCustomer().getId())
-                .warehouseId(order.getWarehouse().getId())
-                .status(order.getStatus())
-                .totalPrice(order.getTotalPrice())
-                .subtotal(order.getSubtotal())
-                .discount(order.getDiscount())
-                .deliveryFee(order.getDeliveryFee())
-                .items(order.getItems().stream()
-                        .map(item -> OrderItemDTO.builder()
-                                .id(item.getId())
-                                .productId(item.getProduct().getId())
-                                .productName(item.getProduct().getName())
-                                .quantity(item.getQuantity())
-                                .unitPrice(item.getUnitPrice())
-                                .subtotal(item.getSubtotal())
-                                .build())
-                        .collect(Collectors.toList()))
-                .deliveryAgentId(order.getDeliveryAgent() != null ? order.getDeliveryAgent().getId() : null)
-                .deliveryAgentName(order.getDeliveryAgent() != null ? order.getDeliveryAgent().getFirstName() + " " + order.getDeliveryAgent().getLastName() : null)
-                .deliveryAddressId(order.getDeliveryAddress() != null ? order.getDeliveryAddress().getId() : null)
-                .estimatedDeliveryTime(order.getEstimatedDeliveryTime())
-                .actualDeliveryTime(order.getActualDeliveryTime())
-                .paymentMethod(order.getPaymentMethod())
-                .paymentStatus(order.getPaymentStatus())
-                .createdAt(order.getCreatedAt())
-                .updatedAt(order.getUpdatedAt())
-                .build();
+        return orderMapper.toDTO(order);
     }
 
     /**

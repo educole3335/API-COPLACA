@@ -6,6 +6,8 @@ import com.coplaca.apirest.dto.ProductRecommendationDTO;
 import com.coplaca.apirest.dto.SeasonalOfferDTO;
 import com.coplaca.apirest.entity.Product;
 import com.coplaca.apirest.entity.SeasonalOffer;
+import com.coplaca.apirest.mapper.ProductMapper;
+import com.coplaca.apirest.mapper.SeasonalOfferMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +29,8 @@ public class RecommendationService {
     private final ProductService productService;
     private final SeasonalOfferService offerService;
     private final UserService userService;
+    private final ProductMapper productMapper;
+    private final SeasonalOfferMapper offerMapper;
 
     // Categorías de temporada (mes : categoría)
         private static final Map<Integer, List<Long>> SEASONAL_CATEGORIES = Map.ofEntries(
@@ -46,10 +50,14 @@ public class RecommendationService {
 
     public RecommendationService(ProductService productService,
                                  SeasonalOfferService offerService,
-                                 UserService userService) {
+                                 UserService userService,
+                                 ProductMapper productMapper,
+                                 SeasonalOfferMapper offerMapper) {
         this.productService = productService;
         this.offerService = offerService;
         this.userService = userService;
+        this.productMapper = productMapper;
+        this.offerMapper = offerMapper;
     }
 
     /**
@@ -93,16 +101,7 @@ public class RecommendationService {
                 .filter(p -> p.getCategory() != null &&
                         seasonalCategoryIds.contains(p.getCategory().getId()))
                 .limit(8)
-                .map(p -> {
-                    ProductDTO dto = new ProductDTO();
-                    dto.setId(p.getId());
-                    dto.setName(p.getName());
-                    dto.setDescription(p.getDescription());
-                    dto.setUnitPrice(p.getUnitPrice());
-                    dto.setStockQuantity(p.getStockQuantity());
-                    dto.setImageUrl(p.getImageUrl());
-                    return dto;
-                })
+                .map(productMapper::toDTO)
                 .toList();
     }
 
@@ -185,12 +184,6 @@ public class RecommendationService {
      * Mapea una oferta a DTO
      */
     private SeasonalOfferDTO mapOfferToDTO(SeasonalOffer offer) {
-        SeasonalOfferDTO dto = new SeasonalOfferDTO();
-        dto.setId(offer.getId());
-        dto.setDiscountPercentage(offer.getDiscountPercentage());
-        dto.setReason(offer.getReason());
-        dto.setStartDate(offer.getStartDate());
-        dto.setEndDate(offer.getEndDate());
-        return dto;
+        return offerMapper.toDTO(offer);
     }
 }

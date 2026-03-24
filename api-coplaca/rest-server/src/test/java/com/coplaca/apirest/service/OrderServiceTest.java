@@ -48,6 +48,9 @@ class OrderServiceTest {
     @Mock
     private WarehouseService warehouseService;
 
+    @Mock
+    private com.coplaca.apirest.mapper.OrderMapper orderMapper;
+
     @InjectMocks
     private OrderService orderService;
 
@@ -64,6 +67,15 @@ class OrderServiceTest {
         when(productService.saveProduct(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(warehouseService.calculateDistanceKm(any(Double.class), any(Double.class), any(Double.class), any(Double.class))).thenReturn(10.0d);
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderMapper.toDTO(any(Order.class))).thenAnswer(invocation -> {
+            Order order = invocation.getArgument(0);
+            OrderDTO dto = new OrderDTO();
+            dto.setOrderNumber(order.getOrderNumber());
+            dto.setSubtotal(order.getSubtotal());
+            dto.setDeliveryFee(order.getDeliveryFee());
+            dto.setStatus(order.getStatus());
+            return dto;
+        });
 
         OrderDTO dto = orderService.createOrder("customer@coplaca.com", request);
 
@@ -110,6 +122,13 @@ class OrderServiceTest {
         when(userService.getUserEntityByEmail("delivery@coplaca.com")).thenReturn(delivery);
         when(orderRepository.findById(20L)).thenReturn(Optional.of(order));
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderMapper.toDTO(any(Order.class))).thenAnswer(invocation -> {
+            Order o = invocation.getArgument(0);
+            OrderDTO dto = new OrderDTO();
+            dto.setStatus(o.getStatus());
+            dto.setActualDeliveryTime(o.getActualDeliveryTime());
+            return dto;
+        });
 
         OrderDTO updated = orderService.updateOrderStatus(20L, OrderStatus.DELIVERED, "delivery@coplaca.com");
 

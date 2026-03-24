@@ -30,6 +30,7 @@
 	<properties>
 		<java.version>21</java.version>
 		<spring-boot.run.skip>true</spring-boot.run.skip>
+		<mapstruct.version>1.6.3</mapstruct.version>
 	</properties>
 
 	<modules>
@@ -39,5 +40,15 @@
 		<module>recommendation-domain</module>
 		<module>rest-server</module>
 	</modules>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.mapstruct</groupId>
+				<artifactId>mapstruct</artifactId>
+				<version>${mapstruct.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 </project>

@@ -4,6 +4,7 @@ import com.coplaca.apirest.dto.ProductDTO;
 import com.coplaca.apirest.exception.ResourceNotFoundException;
 import com.coplaca.apirest.entity.Product;
 import com.coplaca.apirest.entity.SeasonalOffer;
+import com.coplaca.apirest.mapper.ProductMapper;
 import com.coplaca.apirest.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,13 +17,15 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class ProductServiceImpl implements ProductService {
-    
+
     private final ProductRepository productRepository;
     private final SeasonalOfferService offerService;
-    
-    public ProductServiceImpl(ProductRepository productRepository, SeasonalOfferService offerService) {
+    private final ProductMapper productMapper;
+
+    public ProductServiceImpl(ProductRepository productRepository, SeasonalOfferService offerService, ProductMapper productMapper) {
         this.productRepository = productRepository;
         this.offerService = offerService;
+        this.productMapper = productMapper;
     }
     
     @Override
@@ -120,31 +123,15 @@ public class ProductServiceImpl implements ProductService {
     
     private ProductDTO convertToDTO(Product product) {
         Optional<SeasonalOffer> offer = offerService.getActiveOfferByProductId(product.getId());
-        
-        ProductDTO dto = ProductDTO.builder()
-                .id(product.getId())
-                .name(product.getName())
-                .description(product.getDescription())
-                .unit(product.getUnit())
-                .unitPrice(product.getUnitPrice())
-                .originalPrice(product.getOriginalPrice())
-                .stockQuantity(product.getStockQuantity())
-                .imageUrl(product.getImageUrl())
-                .categoryId(product.getCategory().getId())
-                .categoryName(product.getCategory().getName())
-                .origin(product.getOrigin())
-                .nutritionInfo(product.getNutritionInfo())
-                .isActive(product.isActive())
-                .createdAt(product.getCreatedAt())
-                .updatedAt(product.getUpdatedAt())
-                .build();
-        
+
+        ProductDTO dto = productMapper.toDTO(product);
+
         if (offer.isPresent()) {
             SeasonalOffer o = offer.get();
             dto.setDiscountPercentage(o.getDiscountPercentage());
             dto.setOfferReason(o.getReason());
         }
-        
+
         return dto;
     }
 }

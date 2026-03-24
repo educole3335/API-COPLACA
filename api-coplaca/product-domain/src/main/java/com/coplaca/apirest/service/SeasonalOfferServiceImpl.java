@@ -3,6 +3,7 @@ package com.coplaca.apirest.service;
 import com.coplaca.apirest.dto.SeasonalOfferDTO;
 import com.coplaca.apirest.exception.ResourceNotFoundException;
 import com.coplaca.apirest.entity.SeasonalOffer;
+import com.coplaca.apirest.mapper.SeasonalOfferMapper;
 import com.coplaca.apirest.repository.SeasonalOfferRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,9 +18,11 @@ import java.util.stream.Collectors;
 public class SeasonalOfferServiceImpl implements SeasonalOfferService {
 
     private final SeasonalOfferRepository offerRepository;
+    private final SeasonalOfferMapper offerMapper;
 
-    public SeasonalOfferServiceImpl(SeasonalOfferRepository offerRepository) {
+    public SeasonalOfferServiceImpl(SeasonalOfferRepository offerRepository, SeasonalOfferMapper offerMapper) {
         this.offerRepository = offerRepository;
+        this.offerMapper = offerMapper;
     }
 
     @Override
@@ -83,14 +86,6 @@ public class SeasonalOfferServiceImpl implements SeasonalOfferService {
     }
 
     private SeasonalOfferDTO convertToDTO(SeasonalOffer offer) {
-        return SeasonalOfferDTO.builder()
-                .id(offer.getId())
-                .productId(offer.getProduct().getId())
-                .discountPercentage(offer.getDiscountPercentage())
-                .reason(offer.getReason())
-                .startDate(offer.getStartDate())
-                .endDate(offer.getEndDate())
-                .isActive(offer.isActive())
-                .build();
+        return offerMapper.toDTO(offer);
     }
 }

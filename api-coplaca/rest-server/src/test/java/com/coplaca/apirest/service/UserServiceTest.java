@@ -41,6 +41,12 @@ class UserServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private com.coplaca.apirest.mapper.UserMapper userMapper;
+
+    @Mock
+    private com.coplaca.apirest.mapper.AddressMapper addressMapper;
+
     @InjectMocks
     private UserService userService;
 
@@ -113,6 +119,13 @@ class UserServiceTest {
         user.setRoles(Set.of(role("ROLE_ADMIN")));
 
         when(userRepository.findByEmailAndEnabledTrue("admin@coplaca.com")).thenReturn(Optional.of(user));
+        when(userMapper.toDTO(any(User.class))).thenAnswer(invocation -> {
+            User u = invocation.getArgument(0);
+            UserDTO dto = new UserDTO();
+            dto.setId(u.getId());
+            dto.setRoles(Set.of("ADMIN"));
+            return dto;
+        });
 
         UserDTO dto = userService.getCurrentUser("admin@coplaca.com");
 

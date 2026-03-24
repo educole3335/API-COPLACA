@@ -30,6 +30,9 @@ class ProductServiceImplTest {
     @Mock
     private SeasonalOfferService offerService;
 
+    @Mock
+    private com.coplaca.apirest.mapper.ProductMapper productMapper;
+
     @InjectMocks
     private ProductServiceImpl productService;
 
@@ -52,6 +55,12 @@ class ProductServiceImplTest {
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(productMapper.toDTO(any(Product.class))).thenAnswer(invocation -> {
+            Product p = invocation.getArgument(0);
+            ProductDTO dto = new ProductDTO();
+            dto.setStockQuantity(p.getStockQuantity());
+            return dto;
+        });
 
         ProductDTO dto = productService.adjustStock(1L, new BigDecimal("-2.000"));
 
@@ -67,6 +76,9 @@ class ProductServiceImplTest {
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(offerService.getActiveOfferByProductId(1L)).thenReturn(Optional.of(offer));
+        when(productMapper.toDTO(any(Product.class))).thenAnswer(invocation -> {
+            return new ProductDTO();
+        });
 
         ProductDTO dto = productService.getProductById(1L);
 
