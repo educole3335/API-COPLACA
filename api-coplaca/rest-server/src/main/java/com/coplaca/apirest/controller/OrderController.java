@@ -28,6 +28,12 @@ public class OrderController {
         return ResponseEntity.ok(createdOrder);
     }
 
+    @GetMapping("/payment-methods")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<List<String>> getCheckoutPaymentMethods() {
+        return ResponseEntity.ok(orderService.getCheckoutPaymentMethods());
+    }
+
     @GetMapping("/my")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'DELIVERY')")
     public ResponseEntity<List<OrderDTO>> getMyOrders(Authentication authentication) {
