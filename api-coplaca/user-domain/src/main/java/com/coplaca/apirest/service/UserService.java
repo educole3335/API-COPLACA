@@ -14,6 +14,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +26,8 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class UserService {
+
+    private static final Set<String> TOP_UP_METHODS = Set.of("PAYPAL", "CARD", "TRANSFER", "BIZUM");
     
     private final UserRepository userRepository;
     private final AddressService addressService;
@@ -108,6 +113,7 @@ public class UserService {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setPhoneNumber(request.getPhoneNumber());
+        user.setAccountBalance(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
         user.setRoles(resolveRoles(Set.of(normalizedRole)));
 
         if (request.getAddress() != null) {
@@ -245,6 +251,20 @@ public class UserService {
         return convertToDTO(userRepository.save(user));
     }
 
+    public UserDTO topUpBalance(String email, BigDecimal amount, String method) {
+        User user = getUserEntityByEmail(email);
+        requireTopUpAmount(amount);
+        normalizeTopUpMethod(method);
+
+        BigDecimal current = normalizeBalance(user.getAccountBalance());
+        user.setAccountBalance(current.add(amount).setScale(2, RoundingMode.HALF_UP));
+        return convertToDTO(userRepository.save(user));
+    }
+
+    public List<String> getAvailableTopUpMethods() {
+        return new ArrayList<>(TOP_UP_METHODS);
+    }
+
     public List<UserDTO> getAvailableDeliveryAgents(Long warehouseId) {
         return userRepository.findByWarehouseIdAndEnabledTrueAndRolesName(warehouseId, "ROLE_DELIVERY").stream()
                 .filter(user -> user.getDeliveryStatus() == DeliveryAgentStatus.AT_WAREHOUSE)
@@ -289,6 +309,38 @@ public class UserService {
     private boolean hasRole(User user, String roleName) {
         return user.getRoles().stream().anyMatch(role -> role.getName().equals(roleName));
     }
+
+    private BigDecimal normalizeBalance(BigDecimal balance) {
+        if (balance == null) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        return balance.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private void requireTopUpAmount(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Top-up amount must be greater than zero");
+        }
+    }
+
+    private String normalizeTopUpMethod(String method) {
+        String normalized = method == null ? "" : method.trim().toUpperCase();
+        if (!TOP_UP_METHODS.contains(normalized)) {
+            throw new IllegalArgumentException("Unsupported top-up method. Allowed methods: " + TOP_UP_METHODS);
+        }
+        return normalized;
+    }
+
+    private String resolveProfileInitial(User user) {
+        String source = user.getFirstName();
+        if (source == null || source.isBlank()) {
+            source = user.getEmail();
+        }
+        if (source == null || source.isBlank()) {
+            return "?";
+        }
+        return source.substring(0, 1).toUpperCase();
+    }
     
     private UserDTO convertToDTO(User user) {
         AddressDTO addressDTO = null;
@@ -315,6 +367,8 @@ public class UserService {
                 .lastName(user.getLastName())
                 .phoneNumber(user.getPhoneNumber())
                 .profileImage(user.getProfileImage())
+                .profileInitial(resolveProfileInitial(user))
+                .accountBalance(normalizeBalance(user.getAccountBalance()))
                 .address(addressDTO)
                 .warehouseId(user.getWarehouse() != null ? user.getWarehouse().getId() : null)
                 .warehouseName(user.getWarehouse() != null ? user.getWarehouse().getName() : null)
