@@ -37,6 +37,7 @@ Piezas principales:
 
 - `src/main/java/com/coplaca/apirest/ApirestApplication.java`: punto de arranque.
 - `src/main/java/com/coplaca/apirest/config/SecurityConfig.java`: reglas de seguridad.
+- `src/main/java/com/coplaca/apirest/config/OpenApiConfig.java`: configuracion OpenAPI/Swagger.
 - `src/main/java/com/coplaca/apirest/config/DataInitializer.java`: carga de datos iniciales.
 - `src/main/java/com/coplaca/apirest/security/JwtTokenProvider.java`: generacion y validacion JWT.
 - `src/main/java/com/coplaca/apirest/security/JwtAuthenticationFilter.java`: autenticacion por token.
@@ -62,16 +63,19 @@ Pruebas:
 
 - Entidades y repositorios de catalogo (productos, categorias, ofertas).
 - Servicios de negocio de producto y ofertas.
+- Mappers: `mapper/ProductMapper.java`, `mapper/ProductCategoryMapper.java`, `mapper/SeasonalOfferMapper.java`.
 
 ### user-domain
 
 - Entidades de usuario, roles y direcciones.
 - Reglas de usuarios internos, clientes y estados de repartidor.
+- Mappers: `mapper/UserMapper.java`, `mapper/AddressMapper.java`.
 
 ### order-domain
 
 - Entidades de pedido y lineas.
 - Reglas de ciclo de pedido, asignacion y transiciones por rol.
+- Mappers: `mapper/OrderMapper.java`, `mapper/OrderItemMapper.java`.
 
 ### recommendation-domain
 
@@ -98,8 +102,14 @@ Compilar todo el reactor:
 Ejecutar backend:
 
 ```powershell
+$env:JWT_SECRET="dev-jwt-secret-change-me"
 .\mvnw.cmd -f api-coplaca\pom.xml -pl rest-server -am spring-boot:run
 ```
+
+Acceso OpenAPI/Swagger:
+
+- `http://localhost:8080/swagger-ui/index.html`
+- `http://localhost:8080/v3/api-docs`
 
 Ejecutar tests:
 

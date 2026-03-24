@@ -6,6 +6,11 @@ Base URL local:
 
 - http://localhost:8080
 
+Documentacion OpenAPI en runtime:
+
+- Swagger UI: http://localhost:8080/swagger-ui/index.html
+- OpenAPI JSON: http://localhost:8080/v3/api-docs
+
 Autenticacion:
 
 - JWT Bearer en cabecera Authorization.
@@ -78,6 +83,7 @@ Autenticacion:
 
 - Acceso: publico
 - Uso: busqueda de productos
+- Nota: si `query` llega vacia, devuelve el catalogo activo completo
 
 ### POST /products
 
@@ -214,6 +220,24 @@ Body parcial permitido:
 - Acceso: autenticado
 - Uso: baja de cuenta propia (deshabilitar)
 
+### GET /users/me/balance/top-up-methods
+
+- Acceso: autenticado
+- Uso: obtener metodos habilitados para recargar saldo
+
+### POST /users/me/balance/top-up
+
+- Acceso: autenticado
+- Uso: recargar saldo de la cuenta
+- Body:
+
+```json
+{
+  "amount": 25.00,
+  "method": "PAYPAL"
+}
+```
+
 ### PATCH /users/me/delivery-status?status={valor}
 
 - Acceso: DELIVERY
@@ -246,6 +270,15 @@ Body parcial permitido:
 
 - Acceso: CUSTOMER
 - Uso: crear pedido
+
+### GET /orders/payment-methods
+
+- Acceso: CUSTOMER
+- Uso: obtener metodos de pago para checkout
+- Valores tipicos:
+  - PRESENTIAL
+  - CARD
+  - BALANCE
 
 ### GET /orders/my
 

@@ -10,6 +10,7 @@ Estado general:
 - Seguridad y autorizacion por rol activas.
 - Bootstrap de datos de referencia activo.
 - Suite de pruebas unitarias disponible en `rest-server`.
+- OpenAPI/Swagger activo para exploracion y pruebas de endpoints.
 
 ## 2) Logros tecnicos principales
 
@@ -18,6 +19,9 @@ Estado general:
 - Seguridad stateless con JWT y reglas de acceso por endpoint/rol.
 - Soporte de stock decimal para venta por peso.
 - Flujo de pedidos con estados y validaciones por actor (cliente, logistica, reparto, admin).
+- Mappers por dominio para conversion entre entidades y DTOs.
+- Uso de Lombok para reducir boilerplate y mantener consistencia en modelos.
+- Mejoras recientes en saldo de usuario y metodos de pago de checkout.
 
 ## 3) Arquitectura actual
 
@@ -34,6 +38,7 @@ Estado general:
 - Login/signup: `POST /auth/login`, `POST /auth/signup`.
 - Endpoints publicos: `GET /products/**`, `GET /offers/**`, `GET /warehouses/**`.
 - Resto de endpoints: autenticacion obligatoria.
+- OpenAPI disponible en `GET /v3/api-docs` y Swagger UI en `/swagger-ui/index.html`.
 
 ## 4) Datos de arranque
 
@@ -64,7 +69,7 @@ Comando de ejecucion:
 
 - Cobertura de integracion HTTP aun limitada en endpoints criticos.
 - Pruebas de concurrencia sobre stock/pedidos pendientes.
-- Falta especificacion OpenAPI publica para consumidores externos.
+- Mejorar sincronizacion continua entre contratos versionados (`docs/contracts/v1`) y anotaciones de OpenAPI runtime.
 
 
 ## 7) Estado final
