@@ -5,6 +5,7 @@
 Desde la raiz del repositorio:
 
 ```powershell
+$env:JWT_SECRET="dev-jwt-secret-change-me"
 .\mvnw.cmd -f api-coplaca\pom.xml -pl rest-server -am spring-boot:run
 ```
 
@@ -16,6 +17,11 @@ Consola H2:
 
 - http://localhost:8080/h2-console
 
+OpenAPI/Swagger:
+
+- Swagger UI: http://localhost:8080/swagger-ui/index.html
+- OpenAPI JSON: http://localhost:8080/v3/api-docs
+
 ## Inicio con MySQL (Docker)
 
 Usa este bloque unico para arrancar siempre con persistencia en MySQL (evita H2 en memoria):
@@ -25,6 +31,7 @@ cd doker
 docker-compose up -d
 cd ..
 
+$env:JWT_SECRET="dev-jwt-secret-change-me"
 $env:DB_URL="jdbc:mysql://localhost:3306/proyecto?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 $env:DB_USER="root"
 $env:DB_PASSWORD="1234qwerty"

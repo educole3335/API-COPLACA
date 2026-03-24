@@ -8,6 +8,7 @@ Backend de e-commerce de COPLACA para venta minorista de frutas y hortalizas, co
 - Java: 21
 - Framework: Spring Boot 4.0.2
 - Seguridad: JWT + Spring Security
+- Documentacion API: OpenAPI 3 + Swagger UI
 - Base de datos por defecto: H2 en memoria
 - Base de datos opcional: MySQL 8 (Docker)
 
@@ -23,6 +24,11 @@ api-coplaca/
   rest-server/             # Capa HTTP, seguridad y bootstrap de datos
 ```
 
+Patrones tecnicos relevantes:
+
+- Mappers por dominio para conversion Entity <-> DTO.
+- Lombok para reducir codigo repetitivo en entidades y DTOs.
+
 ## Requisitos
 
 - JDK 21
@@ -33,6 +39,7 @@ api-coplaca/
 Desde la raiz del repositorio (`API-COPLACA`):
 
 ```powershell
+$env:JWT_SECRET="dev-jwt-secret-change-me"
 .\mvnw.cmd -f api-coplaca\pom.xml -pl rest-server -am spring-boot:run
 ```
 
@@ -43,6 +50,11 @@ La API inicia en:
 Consola H2 (en modo desarrollo):
 
 - http://localhost:8080/h2-console
+
+OpenAPI/Swagger:
+
+- Swagger UI: http://localhost:8080/swagger-ui/index.html
+- OpenAPI JSON: http://localhost:8080/v3/api-docs
 
 ## Ejecutar con MySQL (Docker)
 
@@ -57,6 +69,7 @@ cd ..
 2. Arranca el backend apuntando a MySQL:
 
 ```powershell
+$env:JWT_SECRET="dev-jwt-secret-change-me"
 $env:DB_URL="jdbc:mysql://localhost:3306/proyecto?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 $env:DB_USER="root"
 $env:DB_PASSWORD="1234qwerty"
@@ -119,10 +132,13 @@ Ejecutar pruebas:
 
 ## Documentacion interna
 
+- `docs/DOCUMENTACION_FINAL.md`: guia final consolidada (estructura, instalaciones, arranque, extensiones, troubleshooting).
 - `QUICKSTART.md`: guia corta para levantar el proyecto.
 - `DATABASE_INIT_README.md`: detalle de datos de arranque y bootstrap.
 - `README_MODULARIZACION.md`: contexto de la modularizacion.
 - `docs/API_REFERENCIA.md`: referencia completa de endpoints y reglas de acceso.
+- `docs/contracts/v1/openapi.yaml`: contrato OpenAPI versionado.
+- `docs/contracts/v1/coplaca-api-v1.postman_collection.json`: coleccion Postman versionada.
 - `docs/BACKEND_AVANCE.md`: estado funcional y tecnico del backend.
 - `docs/BACKEND_MAPA_ARCHIVOS.md`: mapa actual de modulos y capas.
 - `docs/DATOS_AVANZADOS.md`: ejemplos SQL/API para pruebas avanzadas.

@@ -76,6 +76,7 @@ En practica:
 ## Opcion A: H2 en memoria (por defecto)
 
 ```powershell
+$env:JWT_SECRET="dev-jwt-secret-change-me"
 .\mvnw.cmd -f api-coplaca\pom.xml -pl rest-server -am spring-boot:run
 ```
 
@@ -92,6 +93,7 @@ cd ..
 2. Arrancar backend apuntando a MySQL:
 
 ```powershell
+$env:JWT_SECRET="dev-jwt-secret-change-me"
 $env:DB_URL="jdbc:mysql://localhost:3306/proyecto?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 $env:DB_USER="root"
 $env:DB_PASSWORD="1234qwerty"
@@ -102,6 +104,11 @@ $env:DB_DRIVER="com.mysql.cj.jdbc.Driver"
 ## Verificacion rapida
 
 Si todo arranca bien, veras logs del `DataInitializer` y el servidor en `http://localhost:8080`.
+
+Tambien puedes validar documentacion API en runtime:
+
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
 ## Prueba de login
 
