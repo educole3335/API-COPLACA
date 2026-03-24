@@ -64,13 +64,14 @@ class OrderAndRoleAuthorizationIntegrationTest {
 
         when(orderService.createOrder(eq("customer@coplaca.com"), any())).thenReturn(created);
 
-        mockMvc.perform(post("/orders")
+        mockMvc.perform(post("/api/v1/orders")
                         .with(user("customer@coplaca.com").roles("CUSTOMER"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(101L))
-                .andExpect(jsonPath("$.orderNumber").value("ORD-101"));
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(101L))
+                .andExpect(jsonPath("$.data.orderNumber").value("ORD-101"));
     }
 
     @Test
@@ -89,7 +90,7 @@ class OrderAndRoleAuthorizationIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(post("/orders")
+        mockMvc.perform(post("/api/v1/orders")
                         .with(user("delivery@coplaca.com").roles("DELIVERY"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
@@ -98,15 +99,16 @@ class OrderAndRoleAuthorizationIntegrationTest {
 
     @Test
     void adminEndpointRequiresAdminRole() throws Exception {
-        mockMvc.perform(get("/admin/users")
+        mockMvc.perform(get("/api/v1/admin/users")
                         .with(user("customer@coplaca.com").roles("CUSTOMER")))
                 .andExpect(status().isForbidden());
 
         when(userService.getAllUsers()).thenReturn(List.of());
 
-        mockMvc.perform(get("/admin/users")
+        mockMvc.perform(get("/api/v1/admin/users")
                         .with(user("admin@coplaca.com").roles("ADMIN")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray());
     }
 }
