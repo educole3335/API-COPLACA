@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -36,6 +37,9 @@ public class User {
     
     @Column
     private String profileImage;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal accountBalance = BigDecimal.ZERO;
     
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
