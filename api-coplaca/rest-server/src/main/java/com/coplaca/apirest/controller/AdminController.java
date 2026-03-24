@@ -1,9 +1,12 @@
 package com.coplaca.apirest.controller;
 
+import com.coplaca.apirest.constants.ApiConstants;
 import com.coplaca.apirest.dto.SignUpRequest;
+import com.coplaca.apirest.dto.SuccessResponse;
 import com.coplaca.apirest.dto.UserDTO;
 import com.coplaca.apirest.service.OrderService;
 import com.coplaca.apirest.service.UserService;
+import com.coplaca.apirest.util.ResponseHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,7 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 @RestController
-@RequestMapping("/admin")
+@RequestMapping(ApiConstants.API_V1 + ApiConstants.ADMIN)
 @RequiredArgsConstructor
 public class AdminController {
 
@@ -25,123 +28,95 @@ public class AdminController {
 
     @GetMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserDTO>> listUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    public ResponseEntity<SuccessResponse<List<UserDTO>>> listUsers() {
+        return ResponseHelper.ok(userService.getAllUsers());
+    }
+
+    @GetMapping("/users" + ApiConstants.ACTIVE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<SuccessResponse<List<UserDTO>>> getActiveUsers() {
+        List<UserDTO> users = userService.getAllUsers().stream()
+                .filter(UserDTO::isEnabled)
+                .toList();
+        return ResponseHelper.ok(users);
+    }
+
+    @GetMapping("/users" + ApiConstants.DISABLED)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<SuccessResponse<List<UserDTO>>> getDisabledUsers() {
+        List<UserDTO> users = userService.getAllUsers().stream()
+                .filter(u -> !u.isEnabled())
+                .toList();
+        return ResponseHelper.ok(users);
     }
 
     @PutMapping("/users/{id}/roles")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserDTO> changeRoles(@PathVariable Long id, @RequestBody List<String> roleNames) {
-        UserDTO dto = userService.changeRoles(id, Set.copyOf(roleNames));
-        if (dto != null) {
-            return ResponseEntity.ok(dto);
-        }
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<SuccessResponse<UserDTO>> changeRoles(
+            @PathVariable Long id,
+            @RequestBody List<String> roleNames) {
+        return ResponseHelper.ok(userService.changeRoles(id, Set.copyOf(roleNames)), "User roles updated");
     }
 
     @PostMapping("/users/internal")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserDTO> createInternalUser(@RequestBody SignUpRequest request) {
-        return ResponseEntity.ok(userService.getUserById(userService.createManagedUser(request).getId()));
+    public ResponseEntity<SuccessResponse<UserDTO>> createInternalUser(@RequestBody SignUpRequest request) {
+        UserDTO user = userService.getUserById(userService.createManagedUser(request).getId());
+        return ResponseHelper.created(user, "Internal user created successfully");
+    }
+
+    @PostMapping("/users/{id}/reactivate")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<SuccessResponse<UserDTO>> reactivateUser(@PathVariable Long id) {
+        return ResponseHelper.ok(userService.reactivateUser(id), "User reactivated successfully");
     }
 
     @DeleteMapping("/users/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> disableUser(@PathVariable Long id) {
         userService.disableUser(id);
-        return ResponseEntity.noContent().build();
+        return ResponseHelper.noContent();
     }
 
-    @GetMapping("/stats/top-products")
+    @GetMapping(ApiConstants.STATS + "/top-products")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<String>> topProductsLastMonth() {
+    public ResponseEntity<SuccessResponse<List<String>>> topProductsLastMonth() {
         LocalDateTime since = LocalDateTime.now().minus(1, ChronoUnit.MONTHS);
-        List<String> top = orderService.getTopProductsSince(since);
-        return ResponseEntity.ok(top);
+        return ResponseHelper.ok(orderService.getTopProductsSince(since));
     }
 
-    /**
-     * Obtiene estadísticas detalladas de los productos más vendidos
-     */
-    @GetMapping("/stats/products-detailed")
+    @GetMapping(ApiConstants.STATS + "/products-detailed")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<String>> detailedProductStats() {
+    public ResponseEntity<SuccessResponse<List<String>>> detailedProductStats() {
         LocalDateTime since = LocalDateTime.now().minus(1, ChronoUnit.MONTHS);
-        List<String> topProducts = orderService.getTopProductsSince(since);
-        return ResponseEntity.ok(topProducts);
+        return ResponseHelper.ok(orderService.getTopProductsSince(since));
     }
 
-    /**
-     * Obtiene estadísticas de órdenes
-     */
-    @GetMapping("/stats/orders")
+    @GetMapping(ApiConstants.STATS + "/orders")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Map<String, Object>> orderStats(@RequestParam(required = false) String period) {
-        // period: WEEK, MONTH, YEAR, ALL
+    public ResponseEntity<SuccessResponse<Map<String, Object>>> orderStats(
+            @RequestParam(required = false) String period) {
         Map<String, Object> stats = new java.util.HashMap<>();
         stats.put("totalOrders", 0);
         stats.put("completedOrders", 0);
         stats.put("averageOrderValue", 0);
         stats.put("revenue", 0);
-        return ResponseEntity.ok(stats);
+        return ResponseHelper.ok(stats);
     }
 
-    /**
-     * Obtiene estadísticas de usuarios
-     */
-    @GetMapping("/stats/users")
+    @GetMapping(ApiConstants.STATS + "/users")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Map<String, Object>> userStats() {
+    public ResponseEntity<SuccessResponse<Map<String, Object>>> userStats() {
         Map<String, Object> stats = new java.util.HashMap<>();
         stats.put("totalUsers", userService.getAllUsers().size());
         stats.put("activeUsers", 0);
         stats.put("byRole", new java.util.HashMap<>());
-        return ResponseEntity.ok(stats);
+        return ResponseHelper.ok(stats);
     }
 
-    /**
-     * Obtiene lista de usuarios activos
-     */
-    @GetMapping("/users/active")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserDTO>> getActiveUsers() {
-        List<UserDTO> users = userService.getAllUsers().stream()
-                .filter(u -> u.isEnabled())
-                .toList();
-        return ResponseEntity.ok(users);
-    }
-
-    /**
-     * Obtiene usuarios deshabilitados
-     */
-    @GetMapping("/users/disabled")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserDTO>> getDisabledUsers() {
-        List<UserDTO> users = userService.getAllUsers().stream()
-                .filter(u -> !u.isEnabled())
-                .toList();
-        return ResponseEntity.ok(users);
-    }
-
-    /**
-     * Reactiva un usuario deshabilitado
-     */
-    @PostMapping("/users/{id}/reactivate")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserDTO> reactivateUser(@PathVariable Long id) {
-        UserDTO dto = userService.reactivateUser(id);
-        if (dto != null) {
-            return ResponseEntity.ok(dto);
-        }
-        return ResponseEntity.notFound().build();
-    }
-
-    /**
-     * Obtiene órdenes del día
-     */
     @GetMapping("/orders/today")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<Object>> ordersToday() {
-        return ResponseEntity.ok(new java.util.ArrayList<>());
+    public ResponseEntity<SuccessResponse<List<Object>>> ordersToday() {
+        return ResponseHelper.ok(new java.util.ArrayList<>());
     }
 }
