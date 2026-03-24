@@ -1,5 +1,6 @@
 package com.coplaca.apirest.controller;
 
+import com.coplaca.apirest.dto.TopUpBalanceRequest;
 import com.coplaca.apirest.dto.UserDTO;
 import com.coplaca.apirest.dto.UpdateUserRequest;
 import com.coplaca.apirest.entity.DeliveryAgentStatus;
@@ -8,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")
@@ -44,6 +47,22 @@ public class UserController {
     public ResponseEntity<UserDTO> updateDeliveryStatus(Authentication authentication,
                                                         @RequestParam DeliveryAgentStatus status) {
         return ResponseEntity.ok(userService.updateDeliveryStatus(authentication.getName(), status));
+    }
+
+    @GetMapping("/me/balance/top-up-methods")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<String>> getTopUpMethods() {
+        return ResponseEntity.ok(userService.getAvailableTopUpMethods());
+    }
+
+    @PostMapping("/me/balance/top-up")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserDTO> topUpBalance(Authentication authentication,
+                                                @RequestBody TopUpBalanceRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Top-up payload is required");
+        }
+        return ResponseEntity.ok(userService.topUpBalance(authentication.getName(), request.getAmount(), request.getMethod()));
     }
     
     @GetMapping("/{id}")
