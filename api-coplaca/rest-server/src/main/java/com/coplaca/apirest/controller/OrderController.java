@@ -1,194 +1,157 @@
 package com.coplaca.apirest.controller;
 
+import com.coplaca.apirest.constants.ApiConstants;
 import com.coplaca.apirest.dto.CreateOrderRequest;
 import com.coplaca.apirest.dto.OrderDTO;
+import com.coplaca.apirest.dto.SuccessResponse;
 import com.coplaca.apirest.entity.OrderStatus;
 import com.coplaca.apirest.service.OrderService;
+import com.coplaca.apirest.util.ResponseHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
-@RequestMapping("/orders")
+@RequestMapping(ApiConstants.API_V1 + ApiConstants.ORDERS)
 @RequiredArgsConstructor
 public class OrderController {
 
     private final OrderService orderService;
-    
+
     @PostMapping
     @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<OrderDTO> createOrder(Authentication authentication,
-                                                @RequestBody CreateOrderRequest orderRequest) {
+    public ResponseEntity<SuccessResponse<OrderDTO>> createOrder(
+            Authentication authentication,
+            @RequestBody CreateOrderRequest orderRequest) {
         OrderDTO createdOrder = orderService.createOrder(authentication.getName(), orderRequest);
-        return ResponseEntity.ok(createdOrder);
+        return ResponseHelper.created(createdOrder, "Order created successfully");
     }
 
-    @GetMapping("/payment-methods")
-    @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<List<String>> getCheckoutPaymentMethods() {
-        return ResponseEntity.ok(orderService.getCheckoutPaymentMethods());
-    }
-
-    @GetMapping("/my")
+    @GetMapping(ApiConstants.CURRENT_USER)
     @PreAuthorize("hasAnyRole('CUSTOMER', 'DELIVERY')")
-    public ResponseEntity<List<OrderDTO>> getMyOrders(Authentication authentication) {
-        return ResponseEntity.ok(orderService.getCurrentUserOrders(authentication.getName()));
+    public ResponseEntity<SuccessResponse<List<OrderDTO>>> getMyOrders(Authentication authentication) {
+        return ResponseHelper.ok(orderService.getCurrentUserOrders(authentication.getName()));
     }
-    
+
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<OrderDTO> getOrder(@PathVariable Long id, Authentication authentication) {
-        OrderDTO order = orderService.getOrderById(id, authentication.getName());
-        if (order != null) {
-            return ResponseEntity.ok(order);
-        }
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<SuccessResponse<OrderDTO>> getOrder(
+            @PathVariable Long id,
+            Authentication authentication) {
+        return ResponseHelper.ok(orderService.getOrderById(id, authentication.getName()));
     }
-    
+
+    @GetMapping("/{id}/eta")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<SuccessResponse<OrderDTO>> getOrderETA(
+            @PathVariable Long id,
+            Authentication authentication) {
+        return ResponseHelper.ok(orderService.getOrderById(id, authentication.getName()));
+    }
+
     @GetMapping("/customer/{customerId}")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
-    public ResponseEntity<List<OrderDTO>> getCustomerOrders(@PathVariable Long customerId,
-                                                            Authentication authentication) {
-        List<OrderDTO> orders = orderService.getOrdersByCustomer(customerId, authentication.getName());
-        return ResponseEntity.ok(orders);
+    public ResponseEntity<SuccessResponse<List<OrderDTO>>> getCustomerOrders(
+            @PathVariable Long customerId,
+            Authentication authentication) {
+        return ResponseHelper.ok(orderService.getOrdersByCustomer(customerId, authentication.getName()));
     }
-    
+
     @GetMapping("/warehouse/{warehouseId}/pending")
     @PreAuthorize("hasAnyRole('LOGISTICS', 'ADMIN')")
-    public ResponseEntity<List<OrderDTO>> getWarehousePendingOrders(@PathVariable Long warehouseId,
-                                                                    Authentication authentication) {
-        List<OrderDTO> orders = orderService.getPendingOrdersByWarehouse(warehouseId, authentication.getName());
-        return ResponseEntity.ok(orders);
+    public ResponseEntity<SuccessResponse<List<OrderDTO>>> getWarehousePendingOrders(
+            @PathVariable Long warehouseId,
+            Authentication authentication) {
+        return ResponseHelper.ok(orderService.getPendingOrdersByWarehouse(warehouseId, authentication.getName()));
     }
-    
+
+    @GetMapping("/warehouse/{warehouseId}/confirmed")
+    @PreAuthorize("hasAnyRole('LOGISTICS', 'ADMIN')")
+    public ResponseEntity<SuccessResponse<List<OrderDTO>>> getWarehouseConfirmedOrders(
+            @PathVariable Long warehouseId,
+            Authentication authentication) {
+        return ResponseHelper.ok(orderService.getConfirmedOrdersByWarehouse(warehouseId, authentication.getName()));
+    }
+
+    @GetMapping("/warehouse/{warehouseId}/in-transit")
+    @PreAuthorize("hasAnyRole('LOGISTICS', 'ADMIN')")
+    public ResponseEntity<SuccessResponse<List<OrderDTO>>> getWarehouseInTransitOrders(
+            @PathVariable Long warehouseId,
+            Authentication authentication) {
+        return ResponseHelper.ok(orderService.getInTransitOrdersByWarehouse(warehouseId, authentication.getName()));
+    }
+
     @PutMapping("/{orderId}/assign/{deliveryAgentId}")
     @PreAuthorize("hasAnyRole('LOGISTICS', 'ADMIN')")
-    public ResponseEntity<OrderDTO> assignOrderToDeliveryAgent(
+    public ResponseEntity<SuccessResponse<OrderDTO>> assignOrderToDeliveryAgent(
             @PathVariable Long orderId,
             @PathVariable Long deliveryAgentId,
             Authentication authentication) {
         OrderDTO order = orderService.assignOrderToDeliveryAgent(orderId, deliveryAgentId, authentication.getName());
-        if (order != null) {
-            return ResponseEntity.ok(order);
-        }
-        return ResponseEntity.notFound().build();
+        return ResponseHelper.ok(order, "Order assigned to delivery agent");
     }
-    
+
     @PutMapping("/{orderId}/status")
     @PreAuthorize("hasAnyRole('DELIVERY', 'LOGISTICS', 'ADMIN')")
-    public ResponseEntity<OrderDTO> updateOrderStatus(
+    public ResponseEntity<SuccessResponse<OrderDTO>> updateOrderStatus(
             @PathVariable Long orderId,
             @RequestParam OrderStatus status,
             Authentication authentication) {
         OrderDTO order = orderService.updateOrderStatus(orderId, status, authentication.getName());
-        if (order != null) {
-            return ResponseEntity.ok(order);
-        }
-        return ResponseEntity.notFound().build();
+        return ResponseHelper.ok(order, "Order status updated");
     }
-    
+
     @GetMapping("/delivery-agent/{deliveryAgentId}")
     @PreAuthorize("hasAnyRole('DELIVERY', 'LOGISTICS', 'ADMIN')")
-    public ResponseEntity<List<OrderDTO>> getDeliveryAgentOrders(@PathVariable Long deliveryAgentId,
-                                                                 Authentication authentication) {
-        List<OrderDTO> orders = orderService.getOrdersByDeliveryAgent(deliveryAgentId, authentication.getName());
-        return ResponseEntity.ok(orders);
+    public ResponseEntity<SuccessResponse<List<OrderDTO>>> getDeliveryAgentOrders(
+            @PathVariable Long deliveryAgentId,
+            Authentication authentication) {
+        return ResponseHelper.ok(orderService.getOrdersByDeliveryAgent(deliveryAgentId, authentication.getName()));
     }
 
-    /**
-     * Repartidor acepta una orden asignada
-     */
     @PutMapping("/{orderId}/accept")
     @PreAuthorize("hasRole('DELIVERY')")
-    public ResponseEntity<OrderDTO> acceptOrder(@PathVariable Long orderId,
-                                               Authentication authentication) {
-        OrderDTO order = orderService.acceptOrder(orderId, authentication.getName());
-        if (order != null) {
-            return ResponseEntity.ok(order);
-        }
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<SuccessResponse<OrderDTO>> acceptOrder(
+            @PathVariable Long orderId,
+            Authentication authentication) {
+        return ResponseHelper.ok(orderService.acceptOrder(orderId, authentication.getName()), "Order accepted");
     }
 
-    /**
-     * Repartidor rechaza una orden
-     */
     @PutMapping("/{orderId}/reject")
     @PreAuthorize("hasRole('DELIVERY')")
-    public ResponseEntity<OrderDTO> rejectOrder(@PathVariable Long orderId,
-                                               @RequestParam(required = false) String reason,
-                                               Authentication authentication) {
-        OrderDTO order = orderService.rejectOrder(orderId, reason, authentication.getName());
-        if (order != null) {
-            return ResponseEntity.ok(order);
-        }
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<SuccessResponse<OrderDTO>> rejectOrder(
+            @PathVariable Long orderId,
+            @RequestParam(required = false) String reason,
+            Authentication authentication) {
+        return ResponseHelper.ok(orderService.rejectOrder(orderId, reason, authentication.getName()), "Order rejected");
     }
 
-    /**
-     * Confirma que el camión está cargado y listo para partir
-     */
     @PutMapping("/{orderId}/confirm-loaded")
     @PreAuthorize("hasRole('DELIVERY')")
-    public ResponseEntity<OrderDTO> confirmOrderLoaded(@PathVariable Long orderId,
-                                                       Authentication authentication) {
-        OrderDTO order = orderService.confirmOrderLoaded(orderId, authentication.getName());
-        if (order != null) {
-            return ResponseEntity.ok(order);
-        }
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<SuccessResponse<OrderDTO>> confirmOrderLoaded(
+            @PathVariable Long orderId,
+            Authentication authentication) {
+        return ResponseHelper.ok(orderService.confirmOrderLoaded(orderId, authentication.getName()), "Order confirmed as loaded");
     }
 
-    /**
-     * Marca una orden como entregada
-     */
     @PutMapping("/{orderId}/deliver")
     @PreAuthorize("hasRole('DELIVERY')")
-    public ResponseEntity<OrderDTO> deliverOrder(@PathVariable Long orderId,
-                                                 Authentication authentication) {
-        OrderDTO order = orderService.deliverOrder(orderId, authentication.getName());
-        if (order != null) {
-            return ResponseEntity.ok(order);
-        }
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<SuccessResponse<OrderDTO>> deliverOrder(
+            @PathVariable Long orderId,
+            Authentication authentication) {
+        return ResponseHelper.ok(orderService.deliverOrder(orderId, authentication.getName()), "Order delivered successfully");
     }
 
-    /**
-     * Cancela una orden (solo si está en estado permitido)
-     */
     @PutMapping("/{orderId}/cancel")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
-    public ResponseEntity<OrderDTO> cancelOrder(@PathVariable Long orderId,
-                                               @RequestParam(required = false) String reason,
-                                               Authentication authentication) {
-        OrderDTO order = orderService.cancelOrder(orderId, reason, authentication.getName());
-        if (order != null) {
-            return ResponseEntity.ok(order);
-        }
-        return ResponseEntity.notFound().build();
-    }
-
-    /**
-     * Obtiene órdenes de un almacén en estado CONFIRMED (listas para asignar)
-     */
-    @GetMapping("/warehouse/{warehouseId}/confirmed")
-    @PreAuthorize("hasAnyRole('LOGISTICS', 'ADMIN')")
-    public ResponseEntity<List<OrderDTO>> getWarehouseConfirmedOrders(@PathVariable Long warehouseId,
-                                                                      Authentication authentication) {
-        List<OrderDTO> orders = orderService.getConfirmedOrdersByWarehouse(warehouseId, authentication.getName());
-        return ResponseEntity.ok(orders);
-    }
-
-    /**
-     * Obtiene órdenes en tránsito del almacén
-     */
-    @GetMapping("/warehouse/{warehouseId}/in-transit")
-    @PreAuthorize("hasAnyRole('LOGISTICS', 'ADMIN')")
-    public ResponseEntity<List<OrderDTO>> getWarehouseInTransitOrders(@PathVariable Long warehouseId,
-                                                                      Authentication authentication) {
-        List<OrderDTO> orders = orderService.getInTransitOrdersByWarehouse(warehouseId, authentication.getName());
-        return ResponseEntity.ok(orders);
+    public ResponseEntity<SuccessResponse<OrderDTO>> cancelOrder(
+            @PathVariable Long orderId,
+            @RequestParam(required = false) String reason,
+            Authentication authentication) {
+        return ResponseHelper.ok(orderService.cancelOrder(orderId, reason, authentication.getName()), "Order cancelled");
     }
 }
