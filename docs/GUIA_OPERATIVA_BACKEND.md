@@ -176,7 +176,7 @@ Orgenes permitidos por defecto:
 - `http://localhost:4200`
 - `http://localhost:4201`
 
-Si el frontend usa otro puerto (por ejemplo 5173), actualizar `CorsConfig`.
+Si el frontend usa otro puerto (por ejemplo 5173), actualizar `SecurityConfig`.
 
 ## 8.3 OpenAPI y Swagger
 
@@ -264,7 +264,7 @@ Error: falta `JWT_SECRET`
 Error CORS en frontend
 
 - Causa: origen no permitido
-- Solucion: agregar origen en `CorsConfig`
+- Solucion: agregar origen en `SecurityConfig`
 
 Error de conexion MySQL
 
