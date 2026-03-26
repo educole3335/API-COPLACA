@@ -40,33 +40,36 @@ public class DataInitializer {
                 return roleRepository.save(role);
             }));
 
-            // Inicializar Almacenes
-            if (warehouseRepository.findByIsActiveTrue().isEmpty()) {
-                warehouseRepository.save(createWarehouse(
-                        "Almacen Tenerife",
-                        "Poligono Industrial Guimar, Tenerife",
-                        28.3172,
-                        -16.4133,
-                        "922000001",
-                        "Encargado Tenerife"
-                ));
-                warehouseRepository.save(createWarehouse(
-                        "Almacen Gran Canaria",
-                        "Mercalaspalmas, Gran Canaria",
-                        28.0997,
-                        -15.4134,
-                        "928000002",
-                        "Encargado Gran Canaria"
-                ));
-                warehouseRepository.save(createWarehouse(
-                        "Almacen La Palma",
-                        "Zona Industrial El Paso, La Palma",
-                        28.6500,
-                        -17.8830,
-                        "922000003",
-                        "Encargado La Palma"
-                ));
-            }
+            // Inicializar / actualizar Almacenes (coordenadas Canarias actualizadas)
+            upsertWarehouse(
+                    warehouseRepository,
+                    "Almacen Tenerife",
+                    "Poligono Industrial de Guimar, Tenerife",
+                    28.3128,
+                    -16.3972,
+                    "922000001",
+                    "Encargado Tenerife"
+            );
+
+            upsertWarehouse(
+                    warehouseRepository,
+                    "Almacen Gran Canaria",
+                    "Mercalaspalmas, Gran Canaria",
+                    28.0506,
+                    -15.4210,
+                    "928000002",
+                    "Encargado Gran Canaria"
+            );
+
+            upsertWarehouse(
+                    warehouseRepository,
+                    "Almacen La Palma",
+                    "Zona Industrial El Paso, La Palma",
+                    28.6516,
+                    -17.8799,
+                    "922000003",
+                    "Encargado La Palma"
+            );
 
             // Inicializar Admin
             if (userRepository.findByEmail(adminEmail).isEmpty()) {
@@ -419,6 +422,28 @@ public class DataInitializer {
         warehouse.setActive(true);
         return warehouse;
     }
+
+        private void upsertWarehouse(
+                        WarehouseRepository warehouseRepository,
+                        String name,
+                        String address,
+                        double latitude,
+                        double longitude,
+                        String phoneNumber,
+                        String managerName
+        ) {
+                Warehouse warehouse = warehouseRepository.findByName(name)
+                                .orElseGet(() -> createWarehouse(name, address, latitude, longitude, phoneNumber, managerName));
+
+                warehouse.setAddress(address);
+                warehouse.setLatitude(latitude);
+                warehouse.setLongitude(longitude);
+                warehouse.setPhoneNumber(phoneNumber);
+                warehouse.setManagerName(managerName);
+                warehouse.setActive(true);
+
+                warehouseRepository.save(warehouse);
+        }
 
     private ProductCategory createProductCategory(String name, String description, String icon, String color) {
         ProductCategory category = new ProductCategory();
