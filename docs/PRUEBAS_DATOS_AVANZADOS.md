@@ -211,6 +211,6 @@ DELETE FROM users WHERE email NOT IN ('admin@coplaca.local', 'cliente@example.co
 
 - Usar estas credenciales y datos solo en desarrollo.
 - Si cambian enums, DTOs o contratos de endpoints, actualizar este documento en el mismo commit.
-- Para referencia funcional completa de endpoints ver API_REFERENCIA.md.
+- Para referencia funcional completa de endpoints ver REFERENCIA_API.md.
 
 Ultima actualizacion: Marzo 2026

@@ -132,13 +132,14 @@ Ejecutar pruebas:
 
 ## Documentacion interna
 
-- `docs/DOCUMENTACION_FINAL.md`: guia final consolidada (estructura, instalaciones, arranque, extensiones, troubleshooting).
-- `QUICKSTART.md`: guia corta para levantar el proyecto.
-- `DATABASE_INIT_README.md`: detalle de datos de arranque y bootstrap.
-- `README_MODULARIZACION.md`: contexto de la modularizacion.
-- `docs/API_REFERENCIA.md`: referencia completa de endpoints y reglas de acceso.
+- `docs/INDICE_DOCUMENTACION.md`: indice maestro con objetivo, audiencia y uso de cada documento.
+- `docs/GUIA_OPERATIVA_BACKEND.md`: guia operativa consolidada (estructura, instalaciones, arranque, extensiones, troubleshooting).
+- `docs/GUIA_ARRANQUE_RAPIDO.md`: guia corta para levantar el proyecto.
+- `docs/DATOS_INICIALES_BOOTSTRAP.md`: detalle de datos de arranque y bootstrap.
+- `docs/ARQUITECTURA_MODULAR.md`: contexto de la modularizacion.
+- `docs/REFERENCIA_API.md`: referencia completa de endpoints y reglas de acceso.
 - `docs/contracts/v1/openapi.yaml`: contrato OpenAPI versionado.
 - `docs/contracts/v1/coplaca-api-v1.postman_collection.json`: coleccion Postman versionada.
-- `docs/BACKEND_AVANCE.md`: estado funcional y tecnico del backend.
-- `docs/BACKEND_MAPA_ARCHIVOS.md`: mapa actual de modulos y capas.
-- `docs/DATOS_AVANZADOS.md`: ejemplos SQL/API para pruebas avanzadas.
+- `docs/ESTADO_BACKEND.md`: estado funcional y tecnico del backend.
+- `docs/MAPA_BACKEND.md`: mapa actual de modulos y capas.
+- `docs/PRUEBAS_DATOS_AVANZADOS.md`: ejemplos SQL/API para pruebas avanzadas.

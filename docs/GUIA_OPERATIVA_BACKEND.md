@@ -1,4 +1,4 @@
-# Documentacion Final - API COPLACA
+# Guia Operativa del Backend - API COPLACA
 
 Guia consolidada para instalar, configurar, ejecutar y mantener el backend modular de COPLACA.
 
@@ -26,8 +26,8 @@ API-COPLACA/
     rest-server/               # API HTTP, seguridad, config y bootstrap
   docs/                        # Documentacion funcional y tecnica
   doker/                       # Docker Compose para MySQL + phpMyAdmin
-  QUICKSTART.md                # Arranque rapido
-  DATABASE_INIT_README.md      # Datos iniciales y bootstrap
+  docs/GUIA_ARRANQUE_RAPIDO.md      # Arranque rapido
+  docs/DATOS_INICIALES_BOOTSTRAP.md # Datos iniciales y bootstrap
   README.md                    # Vista general
 ```
 
@@ -207,7 +207,28 @@ Al arrancar, `DataInitializer` crea (si no existen):
 - Categorias y productos base
 - Usuarios de ejemplo (admin, clientes, repartidores, logistica)
 
-Credenciales de referencia en `DATABASE_INIT_README.md`.
+Credenciales de referencia en `DATOS_INICIALES_BOOTSTRAP.md`.
+
+Credenciales resumidas para pruebas rapidas:
+
+- Admin: `admin@coplaca.local` / `Admin12345!`
+- Cliente: `cliente@example.com` / `Cliente123!`
+- Cliente: `maria@example.com` / `Maria123!`
+- Repartidor: `repartidor@example.com` / `Repartidor123!`
+- Repartidor: `ana@example.com` / `Ana123!`
+- Logistica: `logistica@example.com` / `Logistica123!`
+- Logistica: `alejandro@example.com` / `Alejandro123!`
+
+Prueba rapida de login:
+
+```bash
+curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "cliente@example.com",
+    "password": "Cliente123!"
+  }'
+```
 
 ## 10) Mejoras funcionales recientes
 
@@ -231,7 +252,7 @@ Credenciales de referencia en `DATABASE_INIT_README.md`.
 - `GET/PUT /users/**`
 - `GET/POST /admin/**`
 
-Referencia completa: `docs/API_REFERENCIA.md`.
+Referencia completa: `docs/REFERENCIA_API.md`.
 
 ## 12) Troubleshooting rapido
 
@@ -260,21 +281,22 @@ Puerto 8080 ocupado
 
 ## 13.1 Documentacion activa (mantener actualizada)
 
+- `docs/INDICE_DOCUMENTACION.md`
 - `README.md`
-- `QUICKSTART.md`
-- `DATABASE_INIT_README.md`
-- `README_MODULARIZACION.md`
-- `docs/API_REFERENCIA.md`
-- `docs/BACKEND_AVANCE.md`
-- `docs/BACKEND_MAPA_ARCHIVOS.md`
-- `docs/DATOS_AVANZADOS.md`
+- `docs/GUIA_ARRANQUE_RAPIDO.md`
+- `docs/DATOS_INICIALES_BOOTSTRAP.md`
+- `docs/ARQUITECTURA_MODULAR.md`
+- `docs/REFERENCIA_API.md`
+- `docs/ESTADO_BACKEND.md`
+- `docs/MAPA_BACKEND.md`
+- `docs/PRUEBAS_DATOS_AVANZADOS.md`
 - `docs/contracts/v1/openapi.yaml`
 - `docs/contracts/v1/coplaca-api-v1.postman_collection.json`
 
 ## 13.2 Politica de limpieza documental
 
 - Evitar documentos duplicados de estado temporal en ramas de trabajo.
-- Consolidar siempre la version final en `docs/DOCUMENTACION_FINAL.md`.
+- Consolidar siempre la guia operativa en `docs/GUIA_OPERATIVA_BACKEND.md`.
 - Si un documento deja de aportar valor, eliminarlo en el mismo commit donde se consolida su contenido.
 
 Documentos de trabajo temporal (como planes o resumentes de refactor) se permiten solo durante ejecucion de una rama; al cerrar la rama deben archivarse o eliminarse.

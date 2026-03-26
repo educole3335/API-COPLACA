@@ -1,4 +1,4 @@
-# Backend Coplaca - Mapa de archivos (actualizado)
+# Mapa del Backend COPLACA - Modulos y Archivos
 
 ## Objetivo
 
@@ -7,9 +7,9 @@ Este documento describe la estructura real del backend despues de la modularizac
 ## 1) Raiz del repositorio
 
 - `README.md`: guia principal del proyecto.
-- `QUICKSTART.md`: arranque rapido.
-- `DATABASE_INIT_README.md`: detalle de bootstrap de datos.
-- `docs/API_REFERENCIA.md`: referencia funcional completa de endpoints.
+- `docs/GUIA_ARRANQUE_RAPIDO.md`: arranque rapido.
+- `docs/DATOS_INICIALES_BOOTSTRAP.md`: detalle de bootstrap de datos.
+- `docs/REFERENCIA_API.md`: referencia funcional completa de endpoints.
 - `doker/docker-compose.yml`: MySQL 8 + phpMyAdmin para entorno local.
 - `mvnw` y `mvnw.cmd`: Maven Wrapper.
 

@@ -1,4 +1,4 @@
-# COPLACA API - Guia Rapida
+# Guia de Arranque Rapido - API COPLACA
 
 ## Inicio rapido con H2 (recomendado para desarrollo)
 
@@ -8,6 +8,10 @@ Desde la raiz del repositorio:
 $env:JWT_SECRET="dev-jwt-secret-change-me"
 .\mvnw.cmd -f api-coplaca\pom.xml -pl rest-server -am spring-boot:run
 ```
+
+Opcional:
+
+- `JWT_EXPIRATION_MS` (por defecto `86400000`)
 
 La API quedara disponible en:
 
@@ -52,6 +56,8 @@ phpMyAdmin:
 - Cliente: `maria@example.com` / `Maria123!`
 - Repartidor: `repartidor@example.com` / `Repartidor123!`
 - Repartidor: `ana@example.com` / `Ana123!`
+- Logistica: `logistica@example.com` / `Logistica123!`
+- Logistica: `alejandro@example.com` / `Alejandro123!`
 
 ## Probar login
 
@@ -84,7 +90,7 @@ curl -X POST http://localhost:8080/auth/login \
 
 ## Mas informacion
 
-- Ver `DATABASE_INIT_README.md` para detalle de bootstrap de datos.
-- Ver `docs/API_REFERENCIA.md` para contratos y endpoints de toda la API.
+- Ver `DATOS_INICIALES_BOOTSTRAP.md` para detalle de bootstrap de datos.
+- Ver `REFERENCIA_API.md` para contratos y endpoints de toda la API.
 - Ver `README.md` para vista general del proyecto.
 
