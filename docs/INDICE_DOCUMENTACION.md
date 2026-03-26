@@ -18,3 +18,10 @@ Este indice resume que contiene cada documento, para quien esta pensado y cuando
 ## Regla de mantenimiento
 
 - Si se crea, renombra o elimina documentacion, actualizar este indice en el mismo commit.
+
+## Orden recomendado de lectura
+
+1. `docs/GUIA_ARRANQUE_RAPIDO.md`
+2. `docs/GUIA_OPERATIVA_BACKEND.md`
+3. `docs/REFERENCIA_API.md`
+4. `docs/MAPA_BACKEND.md`
