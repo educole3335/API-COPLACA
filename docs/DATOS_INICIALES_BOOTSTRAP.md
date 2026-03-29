@@ -1,98 +1,113 @@
-# Inicializacion de Base de Datos - COPLACA API
+# Datos Iniciales y Bootstrap
 
-Este documento explica los datos que se cargan automaticamente al iniciar el backend y como trabajar con ellos en desarrollo.
+Este documento describe la carga automatica de datos al iniciar el backend y el comportamiento esperado en entornos de desarrollo.
 
-## Fuente de la inicializacion
+## Fuente oficial del bootstrap
 
-La inicializacion se realiza desde:
+- api-coplaca/rest-server/src/main/java/com/coplaca/apirest/config/DataInitializer.java
 
-- `api-coplaca/rest-server/src/main/java/com/coplaca/apirest/config/DataInitializer.java`
+## Comportamiento general
 
-## Que datos se crean
+- Se ejecuta al arranque de la aplicacion.
+- Crea datos faltantes y evita duplicados en registros ya existentes.
+- Mezcla estrategias idempotentes por email, nombre o conteo segun entidad.
 
-## 1) Roles
+## Entidades inicializadas
 
-- `ROLE_CUSTOMER`
-- `ROLE_LOGISTICS`
-- `ROLE_DELIVERY`
-- `ROLE_ADMIN`
+### Roles
 
-## 2) Almacenes iniciales
+- ROLE_CUSTOMER
+- ROLE_LOGISTICS
+- ROLE_DELIVERY
+- ROLE_ADMIN
+
+### Almacenes
 
 - Almacen Tenerife
 - Almacen Gran Canaria
 - Almacen La Palma
 
-## 3) Categorias iniciales
+### Categorias
 
 - Frutas Tropicales
 - Frutas Subtropicales
 - Otras Frutas Frescas
 - Ortalizas
 
-## 4) Productos iniciales
+Nota: la categoria se mantiene con nombre Ortalizas segun el codigo actual.
 
-Se crean productos de ejemplo por categoria, incluyendo el producto estrella:
+### Productos
+
+Se inicializan 12 productos base distribuidos por categoria, incluyendo:
 
 - Plátano de Canarias (IGP)
+- Mango
+- Papaya
+- Piña
+- Aguacate
+- Sandía
+- Manzana
+- Naranja
+- Fresa
+- Kiwi
+- Tomate Local
+- Lechuga Fresca
 
-Tambien se inicializan otros productos de prueba para simular catalogo y stock.
+### Usuarios semilla
 
-## 5) Usuarios iniciales
+#### Administracion
 
-- Admin
-  - Email: `admin@coplaca.local`
-  - Password: `Admin12345!`
-- Cliente
-  - Email: `cliente@example.com`
-  - Password: `Cliente123!`
-- Cliente
-  - Email: `maria@example.com`
-  - Password: `Maria123!`
-- Repartidor
-  - Email: `repartidor@example.com`
-  - Password: `Repartidor123!`
-- Repartidor
-  - Email: `ana@example.com`
-  - Password: `Ana123!`
-- Logistica
-  - Email: `logistica@example.com`
-  - Password: `Logistica123!`
-- Logistica
-  - Email: `alejandro@example.com`
-  - Password: `Alejandro123!`
+- admin@coplaca.local / Admin12345!
 
-## Condicion para insertar datos
+#### Clientes
 
-Los datos se insertan solo cuando no existen registros equivalentes.
+- cliente@example.com / Cliente123!
+- maria@example.com / Maria123!
 
-En practica:
+#### Reparto
 
-- Si la base ya tiene datos, no se vuelven a crear duplicados.
-- Si quieres reiniciar, debes limpiar la base/volumen y volver a iniciar.
+- repartidor@example.com / Repartidor123!
+- ana@example.com / Ana123!
+- luis.reparto@example.com / Reparto123!
+- carmen.reparto@example.com / Reparto123!
 
-## Arranque en desarrollo
+#### Logistica
 
-## Opcion A: H2 en memoria (por defecto)
+- logistica@example.com / Logistica123!
+- alejandro@example.com / Alejandro123!
+
+## Personalizacion del admin inicial
+
+Propiedades soportadas:
+
+```properties
+app.bootstrap.admin.email=tu_admin@coplaca.local
+app.bootstrap.admin.password=TuPasswordSeguro123!
+```
+
+Variables de entorno equivalentes:
+
+```powershell
+$env:APP_BOOTSTRAP_ADMIN_EMAIL="tu_admin@coplaca.local"
+$env:APP_BOOTSTRAP_ADMIN_PASSWORD="TuPasswordSeguro123!"
+```
+
+## Arranque para ejecutar bootstrap
+
+### H2 en memoria
 
 ```powershell
 $env:JWT_SECRET="dev-jwt-secret-change-me"
 .\mvnw.cmd -f api-coplaca\pom.xml -pl rest-server -am spring-boot:run
 ```
 
-## Opcion B: MySQL con Docker
-
-1. Levantar MySQL y phpMyAdmin:
+### MySQL con Docker
 
 ```powershell
 cd doker
 docker-compose up -d
 cd ..
-```
 
-2. Arrancar backend apuntando a MySQL:
-
-```powershell
 $env:JWT_SECRET="dev-jwt-secret-change-me"
 $env:DB_URL="jdbc:mysql://localhost:3306/proyecto?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 $env:DB_USER="root"
@@ -101,16 +116,13 @@ $env:DB_DRIVER="com.mysql.cj.jdbc.Driver"
 .\mvnw.cmd -f api-coplaca\pom.xml -pl rest-server -am spring-boot:run
 ```
 
-## Verificacion rapida
+## Validacion del bootstrap
 
-Si todo arranca bien, veras logs del `DataInitializer` y el servidor en `http://localhost:8080`.
+1. Confirmar inicio correcto del backend.
+2. Ejecutar login con un usuario semilla.
+3. Consultar entidades base desde API o DB.
 
-Tambien puedes validar documentacion API en runtime:
-
-- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
-- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
-
-## Prueba de login
+Ejemplo login:
 
 ```bash
 curl -X POST http://localhost:8080/auth/login \
@@ -121,33 +133,29 @@ curl -X POST http://localhost:8080/auth/login \
   }'
 ```
 
-## Personalizar admin bootstrap
+## Reinicio completo de datos
 
-Puedes cambiar el admin inicial por propiedad:
+### En H2
 
-```properties
-app.bootstrap.admin.email=tu_nuevo_email@coplaca.local
-app.bootstrap.admin.password=TuNuevaContrasena123!
+- Reiniciar aplicacion suele resetear datos por ser en memoria.
+
+### En MySQL Docker
+
+```powershell
+cd doker
+docker-compose down -v
+docker-compose up -d
+cd ..
 ```
 
-En entorno tambien aplica (binding relajado):
+Luego reiniciar backend para repoblar.
 
-```bash
-export APP_BOOTSTRAP_ADMIN_EMAIL=admin@example.com
-export APP_BOOTSTRAP_ADMIN_PASSWORD=TuContrasena123!
-```
+## Notas de seguridad
 
-## Acceso a DB
+- Credenciales de este documento son solo para desarrollo.
+- No reutilizar passwords semilla en entornos reales.
+- Cambios en DataInitializer requieren actualizar esta guia en el mismo commit.
 
-- phpMyAdmin: `http://localhost:8081`
-- H2 Console: `http://localhost:8080/h2-console`
+## Fecha de actualizacion
 
-## Notas
-
-- Las credenciales de este documento son solo para desarrollo/demo.
-- No usar estas contrasenas en produccion.
-- Si hay cambios en `DataInitializer`, este documento debe actualizarse en el mismo commit.
-
----
-
-Ultima actualizacion: Marzo 2026
+- Marzo 2026
