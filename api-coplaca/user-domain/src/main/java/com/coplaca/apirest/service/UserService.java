@@ -138,6 +138,17 @@ public class UserService {
         Optional<User> user = userRepository.findById(id != null ? id : 0L);
         if (user.isPresent()) {
             User u = user.get();
+            if (userDetails.getEmail() != null) {
+                String normalizedEmail = userDetails.getEmail().trim().toLowerCase();
+                if (normalizedEmail.isBlank()) {
+                    throw new IllegalArgumentException("Email cannot be empty");
+                }
+                Optional<User> existing = userRepository.findByEmail(normalizedEmail);
+                if (existing.isPresent() && !existing.get().getId().equals(u.getId())) {
+                    throw new IllegalArgumentException("A user with that email already exists");
+                }
+                u.setEmail(normalizedEmail);
+            }
             if (userDetails.getFirstName() != null) {
                 u.setFirstName(userDetails.getFirstName());
             }
