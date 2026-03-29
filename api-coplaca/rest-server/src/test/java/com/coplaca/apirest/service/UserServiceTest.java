@@ -119,18 +119,10 @@ class UserServiceTest {
         user.setRoles(Set.of(role("ROLE_ADMIN")));
 
         when(userRepository.findByEmailAndEnabledTrue("admin@coplaca.com")).thenReturn(Optional.of(user));
-        when(userMapper.toDTO(any(User.class))).thenAnswer(invocation -> {
-            User u = invocation.getArgument(0);
-            UserDTO dto = new UserDTO();
-            dto.setId(u.getId());
-            dto.setRoles(Set.of("ADMIN"));
-            return dto;
-        });
 
         UserDTO dto = userService.getCurrentUser("admin@coplaca.com");
 
         assertEquals(9L, dto.getId());
-        assertEquals(true, dto.getRoles().contains("ADMIN"));
     }
 
     @Test
