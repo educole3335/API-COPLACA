@@ -1,10 +1,21 @@
-# Modularizacion de API-COPLACA
+# Arquitectura Modular de API COPLACA
 
-## Que hicimos
+## Objetivo
 
-Transformamos el proyecto de una estructura monolitica por paquetes a una estructura Maven multi-modulo por dominios de negocio.
+Documentar la arquitectura backend actual tras la modularizacion Maven, explicando responsabilidades por modulo, capas internas y criterios tecnicos de mantenimiento.
 
-Modulos creados:
+## Alcance
+
+- Estructura de modulos en el reactor Maven.
+- Reglas de separacion por dominio.
+- Flujo tecnico desde HTTP hasta persistencia.
+- Beneficios, riesgos y lineamientos para evolucion futura.
+
+## Vista de alto nivel
+
+El backend mantiene un despliegue unico, pero con separacion interna por dominios de negocio y una capa web desacoplada.
+
+Modulos actuales:
 
 - product-domain
 - user-domain
@@ -12,91 +23,99 @@ Modulos creados:
 - recommendation-domain
 - rest-server
 
-## Para que sirve esta modularizacion
+## Responsabilidad por modulo
 
-### 1) Menos acoplamiento
+### product-domain
 
-Cada dominio vive en su propio modulo. Esto evita que un cambio en una parte del sistema rompa facilmente otras partes no relacionadas.
+- Gestiona catalogo, categorias y ofertas estacionales.
+- Contiene reglas de negocio de disponibilidad, precio y stock.
 
-### 2) Mejor mantenibilidad
+### user-domain
 
-Cada modulo tiene responsabilidades claras:
+- Gestiona usuarios, roles, direcciones y estados operativos de reparto.
+- Centraliza operaciones de perfil y administracion funcional de cuentas.
 
-- service: logica de negocio
-- repository: acceso a base de datos con JPA
-- dto (api): contratos de entrada/salida
-- entity: modelo persistente
+### order-domain
 
-El modulo rest-server concentra la capa HTTP (controllers, config y security).
+- Gestiona ciclo de vida de pedidos.
+- Controla transiciones de estado, asignacion de reparto y reglas de cancelacion.
 
-### 3) Mejor escalabilidad del equipo
+### recommendation-domain
 
-Permite que varias personas trabajen en paralelo en modulos distintos con menos conflictos.
+- Provee contenido y recomendaciones para landing.
+- Mantiene logica de seleccion de elementos destacados.
 
-### 4) Build y pruebas mas confiables
+### rest-server
 
-Maven compila y valida por modulos dentro del reactor. Es mas facil localizar errores y saber en que capa o dominio ocurren.
+- Expone API HTTP y configura seguridad JWT.
+- Aloja controllers, filtros, OpenAPI, bootstrap de datos y configuracion de infraestructura de aplicacion.
 
-### 5) Base para evolucion futura
+## Patrón de capas
 
-Con esta separacion es mas sencillo:
+Cada dominio sigue una estructura por capas orientada a mantenibilidad.
 
-- exponer nuevos endpoints
-- extraer un dominio a microservicio en el futuro
-- cambiar implementaciones internas sin impactar toda la app
+| Capa | Ubicacion tipica | Responsabilidad |
+|------|------------------|-----------------|
+| Presentacion | rest-server/controller | Endpoints HTTP, serializacion y codigos de respuesta |
+| Aplicacion | domain/service | Casos de uso y reglas de negocio |
+| Persistencia | domain/repository | Acceso a datos con Spring Data JPA |
+| Modelo | domain/entity | Entidades y relaciones ORM |
+| Transferencia | domain/dto y mapper | Contratos de entrada/salida y conversion Entity-DTO |
 
-## Estructura objetivo
+## Flujo tecnico
 
-- product-domain: catalogo de productos, categorias y ofertas
-- user-domain: usuarios, roles, direcciones y almacenes
-- order-domain: pedidos y flujo de despacho/entrega
-- recommendation-domain: recomendaciones y contenido de landing
-- rest-server: capa web y seguridad
-
-## Resultado validado
-
-- Compilacion del reactor completa: OK
-- Pruebas del reactor completas: OK
-
-## Estructura de capas en cada dominio
-
-Cada módulo de dominio sigue una arquitectura de capas clara:
-
-| Capa | Paquete | Responsabilidad |
-|------|---------|-----------------|
-| **Presentación** | rest-server | Controllers que exponen endpoints HTTP |
-| **API/Transfer** | /api | DTOs que se lanzan al controller |
-| **Negocio** | /service | DomainService que contiene la lógica y llama al repository |
-| **Datos** | /repository | Interfaces JPA que acceden a la DB |
-| **Persistencia** | /entity | Entidades Hibernate (mapeo O/R con la DB) |
-
-### Flujo de datos
-
-```
-Usuario
-  ↓
-Controller (rest-server)
-  ↓
-DTO (api)
-  ↓
-DomainService (service) - Lógica de negocio
-  ↓
-Repository JPA (repo) - Acceso a DB
-  ↓
-Entity Hibernate (entity) - Mapeo de tablas
-  ↓
-Base de Datos
+```text
+Cliente HTTP
+  -> Controller (rest-server)
+  -> Service de dominio
+  -> Repository JPA
+  -> Base de datos
+  -> Mapper + DTO
+  -> Response HTTP
 ```
 
-## Explicación sencilla 
+## Seguridad y fronteras
 
-"Pasamos de un monolito por paquetes a un monolito modular por dominios usando Maven multi-modulo.
-Ahora cada dominio encapsula su logica, repositorios, DTOs y entidades, mientras rest-server expone solo la capa web.
-Con esto reducimos acoplamiento, mejoramos mantenibilidad, aceleramos diagnostico de errores y dejamos la base preparada para crecer sin reescribir todo."
+- La autenticacion se resuelve con JWT Bearer.
+- El control de acceso se define por rol con anotaciones y reglas centralizadas de seguridad.
+- Los endpoints publicos se limitan a autenticacion, landing y consultas de catalogo.
+- El resto de operaciones requiere token valido y rol compatible.
 
-## Explicación tecnica
+## Beneficios obtenidos
 
-"El parent pom ahora maneja un reactor con cuatro modulos. Los servicios y repositorios se movieron a modulos de dominio segun responsabilidad funcional.
-Los controllers y configuracion web quedaron en rest-server, que depende de los modulos de dominio.
-Se eliminaron placeholders Domain* para evitar duplicidad y deuda tecnica.
-La migracion se verifico con compile y test en todo el reactor, asegurando consistencia funcional."
+### Menor acoplamiento
+
+Los cambios en un dominio impactan menos al resto del sistema.
+
+### Mejor mantenibilidad
+
+Cada modulo tiene responsabilidad clara, facilitando refactorizaciones seguras.
+
+### Escalabilidad de equipo
+
+Permite trabajo paralelo por dominio, reduciendo conflictos y tiempos de integracion.
+
+### Diagnostico mas rapido
+
+Al compilar y probar por reactor, los errores quedan mejor localizados por modulo.
+
+### Base para evolucion
+
+La estructura deja preparado el camino para extraer dominios a servicios independientes si el crecimiento de carga o negocio lo requiere.
+
+## Riesgos a vigilar
+
+- Duplicacion de logica entre dominios si no se respetan fronteras.
+- Acoplamiento accidental desde rest-server hacia detalles internos de persistencia.
+- Deriva de contratos DTO sin actualizar OpenAPI y pruebas.
+
+## Reglas de evolucion
+
+- Todo endpoint nuevo debe mapearse a un caso de uso de dominio.
+- Evitar exponer entidades JPA directamente en la API publica.
+- Mantener mappers y DTOs versionados de forma controlada.
+- Actualizar documentacion y contrato versionado en el mismo commit funcional.
+
+## Resumen ejecutivo
+
+API COPLACA opera como monolito modular: despliegue unico, fronteras claras por dominio y una capa web centralizada. Esta arquitectura mejora mantenibilidad, permite evolucion incremental y soporta crecimiento funcional sin reescritura estructural inmediata.
