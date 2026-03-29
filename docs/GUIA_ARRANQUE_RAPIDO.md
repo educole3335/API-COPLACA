@@ -1,34 +1,29 @@
-# Guia de Arranque Rapido - API COPLACA
+# Guia de Arranque Rapido
 
-## Inicio rapido con H2 (recomendado para desarrollo)
+Guia minima para levantar API COPLACA en local en menos de 10 minutos.
 
-Desde la raiz del repositorio:
+## Requisitos
+
+- JDK 21 instalado.
+- Docker Desktop solo si usaras MySQL.
+- PowerShell en Windows.
+
+## Opcion 1: Arranque rapido con H2
+
+Recomendado para desarrollo funcional rapido.
 
 ```powershell
 $env:JWT_SECRET="dev-jwt-secret-change-me"
 .\mvnw.cmd -f api-coplaca\pom.xml -pl rest-server -am spring-boot:run
 ```
 
-Opcional:
+Variables opcionales:
 
-- `JWT_EXPIRATION_MS` (por defecto `86400000`)
+- JWT_EXPIRATION_MS: por defecto 86400000 milisegundos.
 
-La API quedara disponible en:
+## Opcion 2: Arranque con MySQL Docker
 
-- http://localhost:8080
-
-Consola H2:
-
-- http://localhost:8080/h2-console
-
-OpenAPI/Swagger:
-
-- Swagger UI: http://localhost:8080/swagger-ui/index.html
-- OpenAPI JSON: http://localhost:8080/v3/api-docs
-
-## Inicio con MySQL (Docker)
-
-Usa este bloque unico para arrancar siempre con persistencia en MySQL (evita H2 en memoria):
+Recomendado para pruebas con persistencia.
 
 ```powershell
 cd doker
@@ -43,23 +38,21 @@ $env:DB_DRIVER="com.mysql.cj.jdbc.Driver"
 .\mvnw.cmd -f api-coplaca\pom.xml -pl rest-server -am spring-boot:run
 ```
 
-Nota: si la app ya estaba abierta en `:8080`, cierrala antes de ejecutar el bloque.
+## Verificacion de arranque
 
-phpMyAdmin:
+- API: http://localhost:8080
+- Swagger UI: http://localhost:8080/swagger-ui/index.html
+- OpenAPI JSON: http://localhost:8080/v3/api-docs
+- H2 Console: http://localhost:8080/h2-console
+- phpMyAdmin (si aplica): http://localhost:8081
 
-- http://localhost:8081
+## Prueba funcional minima
 
-## Credenciales de ejemplo
+1. Ejecutar login.
+2. Confirmar respuesta con token JWT.
+3. Invocar endpoint protegido con cabecera Authorization.
 
-- Admin: `admin@coplaca.local` / `Admin12345!`
-- Cliente: `cliente@example.com` / `Cliente123!`
-- Cliente: `maria@example.com` / `Maria123!`
-- Repartidor: `repartidor@example.com` / `Repartidor123!`
-- Repartidor: `ana@example.com` / `Ana123!`
-- Logistica: `logistica@example.com` / `Logistica123!`
-- Logistica: `alejandro@example.com` / `Alejandro123!`
-
-## Probar login
+Ejemplo login:
 
 ```bash
 curl -X POST http://localhost:8080/auth/login \
@@ -70,27 +63,42 @@ curl -X POST http://localhost:8080/auth/login \
   }'
 ```
 
-## Datos iniciales que se cargan automaticamente
+## Credenciales de desarrollo
 
-- 4 roles: CUSTOMER, LOGISTICS, DELIVERY, ADMIN
-- 3 almacenes
-- 4 categorias de producto
-- 12 productos base
-- usuarios de ejemplo (admin, clientes, reparto y logistica)
+- Admin: admin@coplaca.local / Admin12345!
+- Cliente: cliente@example.com / Cliente123!
+- Cliente: maria@example.com / Maria123!
+- Repartidor: repartidor@example.com / Repartidor123!
+- Repartidor: ana@example.com / Ana123!
+- Logistica: logistica@example.com / Logistica123!
+- Logistica: alejandro@example.com / Alejandro123!
+
+Usuarios adicionales de reparto bootstrap:
+
+- luis.reparto@example.com / Reparto123!
+- carmen.reparto@example.com / Reparto123!
+
+## Datos semilla cargados automaticamente
+
+- 4 roles base.
+- 3 almacenes en Canarias.
+- 4 categorias.
+- 12 productos iniciales.
+- Usuarios de demo para todos los perfiles operativos.
 
 ## Comandos utiles
 
 ```powershell
-# Compilar el reactor
+# Build completo
 .\mvnw.cmd -f api-coplaca\pom.xml clean verify
 
-# Ejecutar tests
+# Ejecutar pruebas
 .\mvnw.cmd -f api-coplaca\pom.xml test
 ```
 
-## Mas informacion
+## Siguientes lecturas
 
-- Ver `DATOS_INICIALES_BOOTSTRAP.md` para detalle de bootstrap de datos.
-- Ver `REFERENCIA_API.md` para contratos y endpoints de toda la API.
-- Ver `README.md` para vista general del proyecto.
+- docs/GUIA_OPERATIVA_BACKEND.md
+- docs/DATOS_INICIALES_BOOTSTRAP.md
+- docs/REFERENCIA_API.md
 
