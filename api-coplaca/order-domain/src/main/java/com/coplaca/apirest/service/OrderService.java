@@ -3,6 +3,7 @@ package com.coplaca.apirest.service;
 import com.coplaca.apirest.dto.CreateOrderItemRequest;
 import com.coplaca.apirest.dto.CreateOrderRequest;
 import com.coplaca.apirest.dto.OrderDTO;
+import com.coplaca.apirest.dto.UserDTO;
 import com.coplaca.apirest.entity.Address;
 import com.coplaca.apirest.entity.DeliveryAgentStatus;
 import com.coplaca.apirest.entity.Order;
@@ -21,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -147,6 +150,21 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
+    public List<OrderDTO> getAllOrdersByWarehouse(Long warehouseId, String requesterEmail) {
+        User requester = getActiveUserByEmail(requesterEmail);
+        validateWarehouseAccess(requester, warehouseId);
+
+        return orderRepository.findAll().stream()
+                .filter(order -> order.getWarehouse() != null && warehouseId.equals(order.getWarehouse().getId()))
+                .sorted((left, right) -> {
+                    LocalDateTime leftCreatedAt = left.getCreatedAt() == null ? LocalDateTime.MIN : left.getCreatedAt();
+                    LocalDateTime rightCreatedAt = right.getCreatedAt() == null ? LocalDateTime.MIN : right.getCreatedAt();
+                    return rightCreatedAt.compareTo(leftCreatedAt);
+                })
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
     public OrderDTO assignOrderToDeliveryAgent(Long orderId, Long deliveryAgentId, String requesterEmail) {
         User requester = getActiveUserByEmail(requesterEmail);
         Order order = orderRepository.findById(orderId)
@@ -231,6 +249,177 @@ public class OrderService {
                 .map(Map.Entry::getKey)
                 .limit(10)
                 .collect(Collectors.toList());
+    }
+
+    public Map<String, Object> getTopProductsDetailedSince(LocalDateTime since) {
+        List<Order> orders = orderRepository.findByCreatedAtAfter(since);
+        Map<String, BigDecimal> counts = orders.stream()
+                .flatMap(order -> order.getItems().stream())
+                .collect(Collectors.groupingBy(
+                        item -> item.getProduct().getName(),
+                        Collectors.reducing(BigDecimal.ZERO, OrderItem::getQuantity, BigDecimal::add)
+                ));
+
+        List<Map<String, Object>> topProducts = counts.entrySet().stream()
+                .sorted((left, right) -> right.getValue().compareTo(left.getValue()))
+                .limit(10)
+                .map(entry -> {
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("productId", (long) entry.hashCode());
+                    item.put("productName", entry.getKey());
+                    item.put("unitsSold", entry.getValue().intValue());
+                    return item;
+                })
+                .collect(Collectors.toList());
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("topProducts", topProducts);
+        return result;
+    }
+
+    public Map<String, Object> getOrderStatsSince(LocalDateTime since) {
+        List<Order> orders = orderRepository.findByCreatedAtAfter(since);
+
+        long totalOrders = orders.size();
+        long completedOrders = orders.stream()
+                .filter(this::isCompletedOrder)
+                .count();
+
+        List<Order> billableOrders = orders.stream()
+                .filter(this::isBillableOrder)
+                .toList();
+
+        BigDecimal revenue = billableOrders.stream()
+                .map(order -> order.getTotalPrice() == null ? BigDecimal.ZERO : order.getTotalPrice())
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal averageOrderValue = billableOrders.isEmpty()
+                ? BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP)
+                : revenue.divide(BigDecimal.valueOf(billableOrders.size()), 2, RoundingMode.HALF_UP);
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalOrders", totalOrders);
+        stats.put("completedOrders", completedOrders);
+        stats.put("averageOrderValue", averageOrderValue);
+        stats.put("revenue", revenue);
+        return stats;
+    }
+
+    public void validateUserCanBeDisabled(Long userId) {
+        User user = userService.getUserEntityById(userId);
+
+        if (hasRole(user, "ROLE_CUSTOMER")) {
+            boolean hasPendingOrders = orderRepository.findByCustomerId(userId).stream()
+                    .anyMatch(this::isOpenOrder);
+            if (hasPendingOrders) {
+                throw new IllegalStateException("No se puede eliminar el usuario porque tiene pedidos pendientes");
+            }
+        }
+
+        if (hasRole(user, "ROLE_DELIVERY")) {
+            boolean hasPendingOrders = orderRepository.findByDeliveryAgentId(userId).stream()
+                    .anyMatch(this::isOpenOrder);
+            if (hasPendingOrders) {
+                throw new IllegalStateException("No se puede eliminar el repartidor porque tiene pedidos pendientes");
+            }
+        }
+    }
+
+    public List<OrderDTO> getOrdersToday() {
+        LocalDateTime startOfDay = LocalDateTime.now().with(LocalTime.MIN);
+        return orderRepository.findByCreatedAtAfter(startOfDay).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+        public Map<String, Object> getWarehouseStats(Long warehouseId, String requesterEmail, LocalDateTime since) {
+        User requester = getActiveUserByEmail(requesterEmail);
+        validateWarehouseAccess(requester, warehouseId);
+
+        List<Order> warehouseOrders = orderRepository.findAll().stream()
+            .filter(order -> order.getWarehouse() != null && warehouseId.equals(order.getWarehouse().getId()))
+            .filter(order -> order.getCreatedAt() != null && order.getCreatedAt().isAfter(since))
+            .toList();
+
+        long totalOrders = warehouseOrders.size();
+        long deliveredOrders = warehouseOrders.stream().filter(order -> order.getStatus() == OrderStatus.DELIVERED).count();
+        long pendingOrders = warehouseOrders.stream().filter(order -> order.getStatus() == OrderStatus.PENDING).count();
+        long confirmedOrders = warehouseOrders.stream().filter(order -> order.getStatus() == OrderStatus.CONFIRMED).count();
+        long inTransitOrders = warehouseOrders.stream().filter(order -> order.getStatus() == OrderStatus.IN_TRANSIT).count();
+        long cancelledOrders = warehouseOrders.stream().filter(order -> order.getStatus() == OrderStatus.CANCELLED).count();
+        long completedOrders = warehouseOrders.stream().filter(this::isCompletedOrder).count();
+
+        BigDecimal revenue = warehouseOrders.stream()
+            .filter(this::isBillableOrder)
+            .map(order -> order.getTotalPrice() == null ? BigDecimal.ZERO : order.getTotalPrice())
+            .reduce(BigDecimal.ZERO, BigDecimal::add)
+            .setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal pendingRevenue = warehouseOrders.stream()
+            .filter(order -> order.getStatus() == OrderStatus.PENDING || order.getStatus() == OrderStatus.CONFIRMED)
+            .map(order -> order.getTotalPrice() == null ? BigDecimal.ZERO : order.getTotalPrice())
+            .reduce(BigDecimal.ZERO, BigDecimal::add)
+            .setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal averageOrderValue = totalOrders == 0
+            ? BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP)
+            : revenue.divide(BigDecimal.valueOf(totalOrders), 2, RoundingMode.HALF_UP);
+
+        List<UserDTO> users = userService.getAllUsers();
+        long activeLogisticsUsers = users.stream()
+            .filter(UserDTO::isEnabled)
+            .filter(user -> warehouseId.equals(user.getWarehouseId()))
+            .filter(user -> user.getRoles().stream().anyMatch(role -> "LOGISTICS".equalsIgnoreCase(role)))
+            .count();
+        long activeDeliveryUsers = users.stream()
+            .filter(UserDTO::isEnabled)
+            .filter(user -> warehouseId.equals(user.getWarehouseId()))
+            .filter(user -> user.getRoles().stream().anyMatch(role -> "DELIVERY".equalsIgnoreCase(role)))
+            .count();
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalOrders", totalOrders);
+        stats.put("completedOrders", completedOrders);
+        stats.put("pendingOrders", pendingOrders);
+        stats.put("confirmedOrders", confirmedOrders);
+        stats.put("inTransitOrders", inTransitOrders);
+        stats.put("deliveredOrders", deliveredOrders);
+        stats.put("cancelledOrders", cancelledOrders);
+        stats.put("revenue", revenue);
+        stats.put("pendingRevenue", pendingRevenue);
+        stats.put("averageOrderValue", averageOrderValue);
+        stats.put("activeLogisticsUsers", activeLogisticsUsers);
+        stats.put("activeDeliveryUsers", activeDeliveryUsers);
+        return stats;
+        }
+
+    private boolean isCompletedOrder(Order order) {
+        if (order == null) {
+            return false;
+        }
+        return order.getStatus() == OrderStatus.DELIVERED
+                || "COMPLETED".equalsIgnoreCase(order.getPaymentStatus());
+    }
+
+    private boolean isOpenOrder(Order order) {
+        if (order == null || order.getStatus() == null) {
+            return false;
+        }
+        return order.getStatus() != OrderStatus.DELIVERED && order.getStatus() != OrderStatus.CANCELLED;
+    }
+
+    private boolean isBillableOrder(Order order) {
+        if (order == null) {
+            return false;
+        }
+
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            return false;
+        }
+
+        return order.getTotalPrice() != null
+                && order.getTotalPrice().compareTo(BigDecimal.ZERO) > 0;
     }
 
     private void applyDeliveryStatusTransition(Order order, User deliveryAgent, OrderStatus newStatus) {
