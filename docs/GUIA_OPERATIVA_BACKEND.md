@@ -1,133 +1,80 @@
-# Guia Operativa del Backend - API COPLACA
+# Guia Operativa del Backend
 
-Guia consolidada para instalar, configurar, ejecutar y mantener el backend modular de COPLACA.
+Guia de operacion diaria para ejecutar, validar y mantener API COPLACA en entorno local y de pruebas.
 
-## 1) Resumen del proyecto
+## 1. Resumen tecnico
 
-- Tipo: backend de e-commerce (frutas y hortalizas)
-- Arquitectura: Maven multi-modulo
-- Java: 21
-- Framework: Spring Boot
-- Seguridad: JWT + Spring Security
-- Documentacion API: OpenAPI 3 + Swagger UI
-- Base de datos por defecto: H2 (dev)
-- Base de datos opcional: MySQL 8 con Docker
+- Arquitectura: monolito modular Maven.
+- Runtime: Java 21 + Spring Boot.
+- Seguridad: JWT Bearer + control por roles.
+- Datos: H2 en memoria por defecto, MySQL opcional.
+- Documentacion runtime: Swagger UI y OpenAPI JSON.
 
-## 2) Estructura del repositorio
+## 2. Estructura funcional
 
-```text
-API-COPLACA/
-  api-coplaca/
-    pom.xml                    # Parent del reactor Maven
-    product-domain/            # Productos, categorias, ofertas
-    user-domain/               # Usuarios, roles, direcciones, saldo
-    order-domain/              # Pedidos, estados y pagos
-    recommendation-domain/     # Landing y recomendaciones
-    rest-server/               # API HTTP, seguridad, config y bootstrap
-  docs/                        # Documentacion funcional y tecnica
-  doker/                       # Docker Compose para MySQL + phpMyAdmin
-  docs/GUIA_ARRANQUE_RAPIDO.md      # Arranque rapido
-  docs/DATOS_INICIALES_BOOTSTRAP.md # Datos iniciales y bootstrap
-  README.md                    # Vista general
-```
+Modulos:
 
-Arquitectura de transformacion de datos:
+- product-domain
+- user-domain
+- order-domain
+- recommendation-domain
+- rest-server
 
-- Mappers por dominio para convertir Entity <-> DTO.
-- Ubicacion principal: `api-coplaca/*-domain/src/main/java/com/coplaca/apirest/mapper/`.
-- Ejemplos: `ProductMapper`, `UserMapper`, `OrderMapper`, `AddressMapper`.
+Punto de entrada de aplicacion:
 
-## 3) Requisitos e instalaciones
+- api-coplaca/rest-server/src/main/java/com/coplaca/apirest/ApirestApplication.java
 
-## 3.1 Software base
+## 3. Requisitos del entorno
 
-- Git 2.40+
-- JDK 21
-- VS Code (ultimo estable)
-- Docker Desktop (solo si usaras MySQL)
+- JDK 21.
+- PowerShell en Windows.
+- Docker Desktop para escenario MySQL.
 
-## 3.2 Verificaciones rapidas
+Verificacion rapida:
 
 ```powershell
-git --version
 java -version
 docker --version
 ```
 
-## 3.3 Dependencias del proyecto
+## 4. Variables de entorno
 
-No necesitas instalar Maven globalmente; el proyecto usa Maven Wrapper:
+Obligatoria:
 
-- Windows: `mvnw.cmd`
-- Linux/macOS: `./mvnw`
+- JWT_SECRET
 
-## 3.4 Librerias clave del backend
+Opcionales:
 
-- Lombok: reduce boilerplate (`@Data`, `@Builder`, `@NoArgsConstructor`, etc.).
-- springdoc-openapi: genera especificacion OpenAPI y Swagger UI en runtime.
+- JWT_EXPIRATION_MS
+- DB_URL
+- DB_USER
+- DB_PASSWORD
+- DB_DRIVER
+- APP_BOOTSTRAP_ADMIN_EMAIL
+- APP_BOOTSTRAP_ADMIN_PASSWORD
 
-## 4) Extensiones recomendadas para VS Code
-
-Imprescindibles:
-
-- `vscjava.vscode-java-pack`
-- `vmware.vscode-spring-boot`
-- `redhat.vscode-yaml`
-- `ms-azuretools.vscode-docker`
-
-Utiles para pruebas y API:
-
-- `humao.rest-client`
-- `rangav.vscode-thunder-client`
-
-Utiles para productividad:
-
-- `eamodio.gitlens`
-- `mhutchie.git-graph`
-
-## 5) Configuracion minima de entorno
-
-El backend requiere `JWT_SECRET` para arrancar correctamente.
-
-Ejemplo en PowerShell:
+Ejemplo minimo:
 
 ```powershell
 $env:JWT_SECRET="dev-jwt-secret-change-me"
 ```
 
-Opcional:
+## 5. Arranque operativo
 
-- `JWT_EXPIRATION_MS` (por defecto: `86400000`)
-
-## 6) Formas de iniciar el proyecto
-
-## 6.1 Opcion A: H2 en memoria (desarrollo rapido)
-
-Desde la raiz del repositorio:
+### Escenario A: H2 rapido
 
 ```powershell
 $env:JWT_SECRET="dev-jwt-secret-change-me"
 .\mvnw.cmd -f api-coplaca\pom.xml -pl rest-server -am spring-boot:run
 ```
 
-Servicios disponibles:
-
-- API: `http://localhost:8080`
-- H2 Console: `http://localhost:8080/h2-console`
-
-## 6.2 Opcion B: MySQL con Docker (persistencia)
-
-1. Levantar infraestructura:
+### Escenario B: MySQL persistente
 
 ```powershell
 cd doker
 docker-compose up -d
 cd ..
-```
 
-2. Exportar variables y arrancar backend:
-
-```powershell
 $env:JWT_SECRET="dev-jwt-secret-change-me"
 $env:DB_URL="jdbc:mysql://localhost:3306/proyecto?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 $env:DB_USER="root"
@@ -136,167 +83,112 @@ $env:DB_DRIVER="com.mysql.cj.jdbc.Driver"
 .\mvnw.cmd -f api-coplaca\pom.xml -pl rest-server -am spring-boot:run
 ```
 
-Servicios:
+## 6. Validacion post-arranque
 
-- API: `http://localhost:8080`
-- phpMyAdmin: `http://localhost:8081`
+1. Confirmar que responde http://localhost:8080.
+2. Abrir Swagger UI.
+3. Ejecutar login y consumir endpoint protegido.
 
-## 7) Compilacion, test y calidad
+URLs utiles:
 
-Compilar reactor completo:
+- Swagger UI: http://localhost:8080/swagger-ui/index.html
+- OpenAPI JSON: http://localhost:8080/v3/api-docs
+- H2 Console: http://localhost:8080/h2-console
+- phpMyAdmin: http://localhost:8081
+
+## 7. Build y pruebas
 
 ```powershell
+# Build completo
 .\mvnw.cmd -f api-coplaca\pom.xml clean verify
-```
 
-Solo tests:
-
-```powershell
+# Pruebas
 .\mvnw.cmd -f api-coplaca\pom.xml test
-```
 
-Solo compilar sin tests:
-
-```powershell
+# Compilar sin pruebas
 .\mvnw.cmd -f api-coplaca\pom.xml -DskipTests compile
 ```
 
-## 8) Seguridad, CORS y autenticacion
+## 8. Seguridad operativa
 
-## 8.1 JWT
+### Autenticacion
 
-- Login: `POST /auth/login`
-- Signup publico: `POST /auth/signup` (solo clientes)
-- Rutas protegidas requieren: `Authorization: Bearer <token>`
+- Login: POST /auth/login
+- Signup cliente: POST /auth/signup
 
-## 8.2 CORS actual
+### Rutas con prefijo funcional
 
-Orgenes permitidos por defecto:
+La API de negocio usa mayoritariamente prefijo /api/v1.
 
-- `http://localhost:4200`
-- `http://localhost:4201`
+Ejemplos:
 
-Si el frontend usa otro puerto (por ejemplo 5173), actualizar `SecurityConfig`.
+- /api/v1/products
+- /api/v1/orders
+- /api/v1/users
+- /api/v1/admin
 
-## 8.3 OpenAPI y Swagger
+### CORS por defecto
 
-Documentacion interactiva disponible con la app levantada:
+- http://localhost:4200
+- http://localhost:4201
+- http://localhost:5173
 
-- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
-- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+Configurable con app.cors.allowed-origins.
 
-Contrato versionado adicional en repositorio:
+## 9. Operacion de datos semilla
 
-- `docs/contracts/v1/openapi.yaml`
-- `docs/contracts/v1/coplaca-api-v1.postman_collection.json`
+DataInitializer crea datos base en primer arranque sin duplicar existentes:
 
-## 8.4 Como iniciar y usar OpenAPI (paso a paso)
+- Roles
+- Almacenes
+- Categorias
+- Productos
+- Usuarios de demo
 
-1. Arranca la API con H2 o MySQL (seccion 6).
-2. Verifica que el backend este en `http://localhost:8080`.
-3. Abre Swagger UI: `http://localhost:8080/swagger-ui/index.html`.
-4. Si necesitas el contrato crudo, usa: `http://localhost:8080/v3/api-docs`.
-5. Para endpoints privados, primero haz login en `/auth/login` y usa el token JWT en Swagger (`Authorize`).
+Detalle completo en docs/DATOS_INICIALES_BOOTSTRAP.md.
 
-## 9) Datos iniciales
+## 10. Runbook de troubleshooting
 
-Al arrancar, `DataInitializer` crea (si no existen):
+### Falla de arranque por JWT_SECRET
 
-- Roles: CUSTOMER, LOGISTICS, DELIVERY, ADMIN
-- Almacenes iniciales
-- Categorias y productos base
-- Usuarios de ejemplo (admin, clientes, repartidores, logistica)
+- Sintoma: error al inicializar seguridad JWT.
+- Accion: definir JWT_SECRET antes de iniciar.
 
-Credenciales de referencia en `DATOS_INICIALES_BOOTSTRAP.md`.
+### CORS bloqueando frontend
 
-Credenciales resumidas para pruebas rapidas:
+- Sintoma: error de preflight o bloqueo por origen.
+- Accion: añadir origen al valor app.cors.allowed-origins.
 
-- Admin: `admin@coplaca.local` / `Admin12345!`
-- Cliente: `cliente@example.com` / `Cliente123!`
-- Cliente: `maria@example.com` / `Maria123!`
-- Repartidor: `repartidor@example.com` / `Repartidor123!`
-- Repartidor: `ana@example.com` / `Ana123!`
-- Logistica: `logistica@example.com` / `Logistica123!`
-- Logistica: `alejandro@example.com` / `Alejandro123!`
+### Sin conexion a MySQL
 
-Prueba rapida de login:
+- Verificar contenedores arriba con docker-compose ps.
+- Verificar DB_URL, DB_USER y DB_PASSWORD.
+- Confirmar puerto 3306 libre.
 
-```bash
-curl -X POST http://localhost:8080/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "cliente@example.com",
-    "password": "Cliente123!"
-  }'
-```
+### Puerto 8080 ocupado
 
-## 10) Mejoras funcionales recientes
+- Cerrar proceso previo o levantar backend en otro puerto.
 
-- Perfil de usuario con soporte de saldo e inicial de avatar.
-- Recarga de saldo en backend con metodos habilitados.
-- Checkout con metodos de pago: `PRESENTIAL`, `CARD`, `BALANCE`.
-- Endpoint para obtener metodos de pago de checkout: `GET /orders/payment-methods`.
-- Endpoints de saldo:
-  - `GET /users/me/balance/top-up-methods`
-  - `POST /users/me/balance/top-up`
-- Busqueda de productos mejorada: si `query` esta vacia en `GET /products/search`, retorna catalogo activo completo.
+### Credenciales semilla no funcionan
 
-## 11) Endpoints base de referencia
+- Revisar si el usuario ya existia con otra password hash.
+- Reiniciar volumen MySQL si se requiere estado limpio.
 
-- `POST /auth/login`
-- `POST /auth/signup`
-- `GET /products/**`
-- `GET /offers/**`
-- `GET /warehouses/**`
-- `GET/POST /orders/**` (segun rol)
-- `GET/PUT /users/**`
-- `GET/POST /admin/**`
+## 11. Checklist de cambios backend
 
-Referencia completa: `docs/REFERENCIA_API.md`.
+1. Implementar cambio en dominio y/o rest-server.
+2. Compilar reactor y ejecutar pruebas.
+3. Actualizar docs afectados.
+4. Verificar OpenAPI runtime.
+5. Si aplica, alinear docs/contracts/v1.
 
-## 12) Troubleshooting rapido
+## 12. Documentacion vinculada
 
-Error: falta `JWT_SECRET`
-
-- Causa: variable no definida
-- Solucion: exportar `JWT_SECRET` antes de arrancar
-
-Error CORS en frontend
-
-- Causa: origen no permitido
-- Solucion: agregar origen en `SecurityConfig`
-
-Error de conexion MySQL
-
-- Verificar `docker-compose up -d`
-- Verificar `DB_URL`, `DB_USER`, `DB_PASSWORD`
-- Verificar puerto 3306 libre
-
-Puerto 8080 ocupado
-
-- Detener proceso previo del backend
-- O arrancar en otro puerto con propiedades de Spring
-
-## 13) Documentacion relacionada
-
-## 13.1 Documentacion activa (mantener actualizada)
-
-- `docs/INDICE_DOCUMENTACION.md`
-- `README.md`
-- `docs/GUIA_ARRANQUE_RAPIDO.md`
-- `docs/DATOS_INICIALES_BOOTSTRAP.md`
-- `docs/ARQUITECTURA_MODULAR.md`
-- `docs/REFERENCIA_API.md`
-- `docs/ESTADO_BACKEND.md`
-- `docs/MAPA_BACKEND.md`
-- `docs/PRUEBAS_DATOS_AVANZADOS.md`
-- `docs/contracts/v1/openapi.yaml`
-- `docs/contracts/v1/coplaca-api-v1.postman_collection.json`
-
-## 13.2 Politica de limpieza documental
-
-- Evitar documentos duplicados de estado temporal en ramas de trabajo.
-- Consolidar siempre la guia operativa en `docs/GUIA_OPERATIVA_BACKEND.md`.
-- Si un documento deja de aportar valor, eliminarlo en el mismo commit donde se consolida su contenido.
-
-Documentos de trabajo temporal (como planes o resumentes de refactor) se permiten solo durante ejecucion de una rama; al cerrar la rama deben archivarse o eliminarse.
+- docs/INDICE_DOCUMENTACION.md
+- docs/GUIA_ARRANQUE_RAPIDO.md
+- docs/ARQUITECTURA_MODULAR.md
+- docs/MAPA_BACKEND.md
+- docs/REFERENCIA_API.md
+- docs/PRUEBAS_DATOS_AVANZADOS.md
+- docs/ESTADO_BACKEND.md
+- docs/PRESENTACION_TECNICA_BACKEND.md
