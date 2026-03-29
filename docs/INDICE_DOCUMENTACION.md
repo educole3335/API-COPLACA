@@ -1,27 +1,37 @@
-# Indice Maestro de Documentacion - API COPLACA
+# Indice Maestro de Documentacion
 
-Este indice resume que contiene cada documento, para quien esta pensado y cuando usarlo.
+Inventario oficial de documentacion del backend API COPLACA.
 
-| Documento | Proposito | Audiencia | Cuando usarlo |
+## Mapa documental
+
+| Documento | Propósito | Audiencia | Cuándo usarlo |
 |---|---|---|---|
-| `docs/GUIA_ARRANQUE_RAPIDO.md` | Levantar la API en minutos (H2 o MySQL) | Desarrollo/QA | Primer arranque local o smoke test rapido |
-| `docs/GUIA_OPERATIVA_BACKEND.md` | Guia operativa completa del backend | Desarrollo/DevOps | Configuracion, ejecucion, troubleshooting y operacion diaria |
-| `docs/REFERENCIA_API.md` | Referencia funcional y tecnica de endpoints | Frontend/Backend/QA | Consultar contratos de endpoints, roles y flujo de uso |
-| `docs/DATOS_INICIALES_BOOTSTRAP.md` | Datos semilla y bootstrap de entorno | Desarrollo/QA | Revisar usuarios base, roles, carga inicial y personalizacion del bootstrap |
-| `docs/ARQUITECTURA_MODULAR.md` | Explicacion de la modularizacion por dominios | Desarrollo/Arquitectura | Entender estructura modular y responsabilidades por capa |
-| `docs/MAPA_BACKEND.md` | Mapa de modulos, piezas clave y rutas de codigo | Desarrollo | Ubicar rapidamente clases, modulos y puntos de entrada |
-| `docs/ESTADO_BACKEND.md` | Estado funcional/técnico actual del backend | Producto/Desarrollo | Revisar capacidades implementadas y brechas actuales |
-| `docs/PRUEBAS_DATOS_AVANZADOS.md` | Datos avanzados y casos de prueba SQL/API | QA/Desarrollo | Preparar escenarios de prueba y validaciones avanzadas |
-| `docs/contracts/v1/openapi.yaml` | Contrato OpenAPI versionado | Frontend/Backend/Integraciones | Integracion basada en contrato y control de cambios de API |
-| `docs/contracts/v1/coplaca-api-v1.postman_collection.json` | Coleccion Postman versionada | QA/Desarrollo | Ejecucion manual o automatizada de pruebas de endpoints |
+| docs/GUIA_ARRANQUE_RAPIDO.md | Levantar backend en minutos | Desarrollo, QA | Primer setup local y smoke test inicial |
+| docs/GUIA_OPERATIVA_BACKEND.md | Operacion diaria y runbook tecnico | Desarrollo, DevOps, QA | Configuracion, ejecucion, soporte y troubleshooting |
+| docs/ARQUITECTURA_MODULAR.md | Diseño arquitectonico y criterios de modularizacion | Arquitectura, Desarrollo | Entender fronteras de dominio y decisiones estructurales |
+| docs/MAPA_BACKEND.md | Navegacion por modulos y componentes | Desarrollo | Localizar rapido clases, capas y rutas de codigo |
+| docs/REFERENCIA_API.md | Catalogo de endpoints y acceso por rol | Frontend, Backend, QA | Integraciones y validacion funcional de API |
+| docs/DATOS_INICIALES_BOOTSTRAP.md | Datos semilla y comportamiento de bootstrap | Desarrollo, QA | Preparar entornos de prueba y reset de datos |
+| docs/PRUEBAS_DATOS_AVANZADOS.md | Escenarios avanzados API + SQL | QA, Desarrollo | Pruebas de ciclo completo y validaciones cruzadas |
+| docs/ESTADO_BACKEND.md | Estado tecnico consolidado y brechas | Producto, Arquitectura, Desarrollo | Seguimiento de madurez y prioridades |
+| docs/PRESENTACION_TECNICA_BACKEND.md | Guion de presentacion tecnica e informativa | Liderazgo tecnico, stakeholders, equipo | Exponer arquitectura, capacidades y roadmap |
+| docs/PRESENTACION_BACKEND_1H.md | Presentacion tecnica completa de 60 minutos | Liderazgo tecnico, stakeholders, equipo | Sesion extendida con guion slide por slide y tiempos |
+| docs/contracts/v1/openapi.yaml | Contrato OpenAPI versionado | Frontend, Integraciones, QA | Consumo por contrato y control de version API |
+| docs/contracts/v1/coplaca-api-v1.postman_collection.json | Coleccion Postman de referencia | QA, Desarrollo | Ejecucion manual y automatizacion de pruebas |
 
 ## Regla de mantenimiento
 
-- Si se crea, renombra o elimina documentacion, actualizar este indice en el mismo commit.
+1. Toda modificacion documental debe reflejarse en este indice en el mismo commit.
+2. Si cambia un endpoint, actualizar al menos Referencia API y contrato versionado.
+3. Evitar documentos duplicados; consolidar en los archivos oficiales de este indice.
 
-## Orden recomendado de lectura
+## Ruta de lectura sugerida
 
-1. `docs/GUIA_ARRANQUE_RAPIDO.md`
-2. `docs/GUIA_OPERATIVA_BACKEND.md`
-3. `docs/REFERENCIA_API.md`
-4. `docs/MAPA_BACKEND.md`
+1. docs/GUIA_ARRANQUE_RAPIDO.md
+2. docs/GUIA_OPERATIVA_BACKEND.md
+3. docs/ARQUITECTURA_MODULAR.md
+4. docs/MAPA_BACKEND.md
+5. docs/REFERENCIA_API.md
+6. docs/ESTADO_BACKEND.md
+7. docs/PRESENTACION_TECNICA_BACKEND.md
+8. docs/PRESENTACION_BACKEND_1H.md
