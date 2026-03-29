@@ -18,4 +18,5 @@ public interface ProductService {
     Product updateProduct(Long id, Product productDetails);
     void disableProduct(Long id);
     ProductDTO adjustStock(Long id, BigDecimal quantityChange);
+    ProductDTO adjustPrice(Long id, BigDecimal newUnitPrice);
 }
