@@ -1,445 +1,433 @@
-# API Referencia Completa - COPLACA
+# Referencia API Backend COPLACA
 
-Referencia funcional y tecnica de endpoints del backend.
+Referencia operativa de endpoints expuestos por el backend con rutas actuales, objetivo funcional y acceso por rol.
 
-Base URL local:
+## Contexto general
 
-- http://localhost:8080
-
-Documentacion OpenAPI en runtime:
-
+- Base URL local: http://localhost:8080
 - Swagger UI: http://localhost:8080/swagger-ui/index.html
 - OpenAPI JSON: http://localhost:8080/v3/api-docs
+- Autenticacion: JWT Bearer en cabecera Authorization
 
-Autenticacion:
+## Convencion de rutas
 
-- JWT Bearer en cabecera Authorization.
-- Formato: Authorization: Bearer <token>
+- Autenticacion y landing sin prefijo funcional:
+  - /auth/**
+  - /landing/**
+- Recursos de dominio con prefijo:
+  - /api/v1/**
 
----
+## Comportamiento real de acceso
 
-## 1) Auth
+- Importante: la configuracion de seguridad global permite GET publico para /products/**, /offers/** y /warehouses/** sin prefijo.
+- Como los controladores actuales usan /api/v1/**, en la practica los endpoints GET de /api/v1 tambien requieren autenticacion salvo que tengan permiso explicito.
+- En esta referencia se documenta el acceso efectivo actual, no el comportamiento esperado historicamente.
+
+## 1. Auth
 
 ### POST /auth/login
 
 - Acceso: publico
-- Uso: iniciar sesion
-- Body:
-
-```json
-{
-  "email": "cliente@example.com",
-  "password": "Cliente123!"
-}
-```
+- Uso: autenticacion de usuario
 
 ### POST /auth/signup
 
 - Acceso: publico
-- Uso: alta publica solo para clientes
-- Reglas:
-- Debe incluir direccion
-- Role permitido: CUSTOMER/ROLE_CUSTOMER
+- Uso: registro publico de cliente
+- Regla: requiere direccion de entrega
 
----
-
-## 2) Landing y recomendaciones
+## 2. Landing
 
 ### GET /landing
 
 - Acceso: publico
-- Uso: contenido general de landing
+- Uso: contenido general de portada
 
 ### GET /landing/seasonal
 
 - Acceso: publico
-- Uso: productos de temporada
+- Uso: coleccion estacional
 
 ### GET /landing/recommendations
 
 - Acceso: publico
-- Uso: recomendaciones personalizadas (si hay usuario autenticado, usa su contexto)
+- Uso: recomendaciones de productos
 
----
-
-## 3) Productos
-
-### GET /products
+### GET /landing/health
 
 - Acceso: publico
-- Uso: listado de productos activos
+- Uso: verificacion de estado basico
 
-### GET /products/{id}
+## 3. Productos
 
-- Acceso: publico
+Base: /api/v1/products
+
+### GET /
+
+- Acceso: autenticado (configuracion actual)
+- Uso: lista de productos activos
+
+### GET /{id}
+
+- Acceso: autenticado (configuracion actual)
 - Uso: detalle de producto
 
-### GET /products/category/{categoryId}
+### GET /category/{categoryId}
 
-- Acceso: publico
+- Acceso: autenticado (configuracion actual)
 - Uso: productos por categoria
 
-### GET /products/search?query={texto}
+### GET /search?query=texto
 
-- Acceso: publico
-- Uso: busqueda de productos
-- Nota: si `query` llega vacia, devuelve el catalogo activo completo
+- Acceso: autenticado (configuracion actual)
+- Uso: busqueda textual
 
-### POST /products
-
-- Acceso: LOGISTICS o ADMIN
-- Uso: crear producto
-
-### PUT /products/{id}
+### POST /
 
 - Acceso: LOGISTICS o ADMIN
-- Uso: actualizar producto
+- Uso: alta de producto
 
-### DELETE /products/{id}
-
-- Acceso: LOGISTICS o ADMIN
-- Uso: desactivar producto
-
-### PATCH /products/{id}/stock?delta={valor}
+### PUT /{id}
 
 - Acceso: LOGISTICS o ADMIN
-- Uso: ajustar stock (decimal)
+- Uso: actualizacion de producto
 
----
+### DELETE /{id}
 
-## 4) Categorias
+- Acceso: LOGISTICS o ADMIN
+- Uso: desactivacion funcional
 
-### GET /categories
+### PATCH /{id}/stock?delta=valor
 
-- Acceso: publico
-- Uso: listar categorias
+- Acceso: LOGISTICS o ADMIN
+- Uso: ajuste incremental de stock
 
-### GET /categories/{id}
+### PATCH /{id}/price?value=valor
 
-- Acceso: publico
-- Uso: detalle categoria
+- Acceso: LOGISTICS o ADMIN
+- Uso: ajuste de precio
 
-### POST /categories
+## 4. Categorias
+
+Base: /api/v1/categories
+
+### GET /
+
+- Acceso: autenticado (configuracion actual)
+- Uso: lista de categorias
+
+### GET /{id}
+
+- Acceso: autenticado (configuracion actual)
+- Uso: detalle de categoria
+
+### POST /
 
 - Acceso: LOGISTICS o ADMIN
 - Uso: crear categoria
 
-### PUT /categories/{id}
+### PUT /{id}
 
 - Acceso: LOGISTICS o ADMIN
 - Uso: actualizar categoria
 
-### DELETE /categories/{id}
+### DELETE /{id}
 
 - Acceso: ADMIN
 - Uso: eliminar categoria
 
----
+## 5. Ofertas estacionales
 
-## 5) Ofertas
+Base: /api/v1/offers
 
-### GET /offers
+### GET /
 
-- Acceso: publico
+- Acceso: autenticado (configuracion actual)
 - Uso: listar ofertas activas
 
-### GET /offers/{id}
+### GET /{id}
 
-- Acceso: publico
+- Acceso: autenticado (configuracion actual)
 - Uso: detalle de oferta
 
-### POST /offers
+### POST /
 
 - Acceso: LOGISTICS o ADMIN
-- Uso: crear oferta estacional
+- Uso: crear oferta
 
-### PUT /offers/{id}
+### PUT /{id}
 
 - Acceso: LOGISTICS o ADMIN
-- Uso: actualizar oferta
+- Uso: editar oferta
 
-### DELETE /offers/{id}
+### DELETE /{id}
 
 - Acceso: LOGISTICS o ADMIN
 - Uso: desactivar oferta
 
----
+## 6. Almacenes
 
-## 6) Almacenes
+Base: /api/v1/warehouses
 
-### GET /warehouses
+### GET /
 
-- Acceso: publico
+- Acceso: autenticado (configuracion actual)
 - Uso: listar almacenes
 
-### GET /warehouses/{id}
+### GET /{id}
 
-- Acceso: publico
+- Acceso: autenticado (configuracion actual)
 - Uso: detalle de almacen
 
-### GET /warehouses/{id}/delivery-agents
+### GET /{id}/delivery-agents
 
 - Acceso: LOGISTICS o ADMIN
-- Uso: repartidores disponibles por almacen
+- Uso: listar repartidores por almacen
 
-### POST /warehouses
+### POST /
 
 - Acceso: ADMIN
 - Uso: crear almacen
 
-### PUT /warehouses/{id}
+### PUT /{id}
 
 - Acceso: ADMIN
 - Uso: actualizar almacen
 
----
+## 7. Usuarios
 
-## 7) Usuarios
+Base: /api/v1/users
 
-### GET /users/me
-
-- Acceso: autenticado
-- Uso: ver perfil propio
-
-### PUT /users/me
+### GET /me
 
 - Acceso: autenticado
-- Uso: actualizar perfil propio (parcial)
+- Uso: perfil propio
 
-Body parcial permitido:
-
-```json
-{
-  "firstName": "NuevoNombre",
-  "phoneNumber": "699111222"
-}
-```
-
-### DELETE /users/me
+### PUT /me
 
 - Acceso: autenticado
-- Uso: baja de cuenta propia (deshabilitar)
+- Uso: actualizar perfil propio
 
-### GET /users/me/balance/top-up-methods
-
-- Acceso: autenticado
-- Uso: obtener metodos habilitados para recargar saldo
-
-### POST /users/me/balance/top-up
+### DELETE /me
 
 - Acceso: autenticado
-- Uso: recargar saldo de la cuenta
-- Body:
+- Uso: desactivar cuenta propia
 
-```json
-{
-  "amount": 25.00,
-  "method": "PAYPAL"
-}
-```
-
-### PATCH /users/me/delivery-status?status={valor}
+### PATCH /me/delivery-status?status=AT_WAREHOUSE|DELIVERING|OFFLINE
 
 - Acceso: DELIVERY
-- Uso: cambiar estado operativo del repartidor
-- Valores validos:
-- AT_WAREHOUSE
-- DELIVERING
-- OFFLINE
+- Uso: actualizar estado operativo de reparto
 
-### GET /users/{id}
+### GET /{id}
 
 - Acceso: ADMIN
-- Uso: ver usuario por id
+- Uso: detalle de usuario
 
-### PUT /users/{id}
-
-- Acceso: ADMIN
-- Uso: actualizar usuario por id
-
-### DELETE /users/{id}
+### PUT /{id}
 
 - Acceso: ADMIN
-- Uso: desactivar usuario por id
+- Uso: actualizacion administrativa
 
----
+### DELETE /{id}
 
-## 8) Pedidos
+- Acceso: ADMIN
+- Uso: desactivar usuario
 
-### POST /orders
+## 8. Pedidos
+
+Base: /api/v1/orders
+
+### POST /
 
 - Acceso: CUSTOMER
 - Uso: crear pedido
 
-### GET /orders/payment-methods
-
-- Acceso: CUSTOMER
-- Uso: obtener metodos de pago para checkout
-- Valores tipicos:
-  - PRESENTIAL
-  - CARD
-  - BALANCE
-
-### GET /orders/my
+### GET /me
 
 - Acceso: CUSTOMER o DELIVERY
 - Uso: pedidos del usuario autenticado
 
-### GET /orders/{id}
+### GET /{id}
 
 - Acceso: autenticado
-- Uso: detalle de pedido (con control interno de acceso)
+- Uso: detalle de pedido con control interno
 
-### GET /orders/customer/{customerId}
+### GET /{id}/eta
+
+- Acceso: autenticado
+- Uso: obtener informacion ETA asociada al pedido
+
+### GET /customer/{customerId}
 
 - Acceso: CUSTOMER o ADMIN
 - Uso: pedidos por cliente
 
-### GET /orders/warehouse/{warehouseId}/pending
+### GET /warehouse/{warehouseId}/pending
 
 - Acceso: LOGISTICS o ADMIN
-- Uso: pedidos pendientes por almacen
+- Uso: pedidos pendientes
 
-### GET /orders/warehouse/{warehouseId}/confirmed
-
-- Acceso: LOGISTICS o ADMIN
-- Uso: pedidos confirmados listos para asignar
-
-### GET /orders/warehouse/{warehouseId}/in-transit
+### GET /warehouse/{warehouseId}/all
 
 - Acceso: LOGISTICS o ADMIN
-- Uso: pedidos en transito por almacen
+- Uso: pedidos del almacen
 
-### GET /orders/delivery-agent/{deliveryAgentId}
+### GET /warehouse/{warehouseId}/confirmed
+
+- Acceso: LOGISTICS o ADMIN
+- Uso: pedidos confirmados
+
+### GET /warehouse/{warehouseId}/in-transit
+
+- Acceso: LOGISTICS o ADMIN
+- Uso: pedidos en transito
+
+### GET /warehouse/{warehouseId}/stats?period=day|week|month
+
+- Acceso: LOGISTICS o ADMIN
+- Uso: estadisticas operativas por ventana temporal
+
+### GET /delivery-agent/{deliveryAgentId}
 
 - Acceso: DELIVERY, LOGISTICS o ADMIN
 - Uso: pedidos de un repartidor
 
-### PUT /orders/{orderId}/assign/{deliveryAgentId}
+### PUT /{orderId}/assign/{deliveryAgentId}
 
 - Acceso: LOGISTICS o ADMIN
-- Uso: asignar pedido a repartidor
+- Uso: asignar pedido a reparto
 
-### PUT /orders/{orderId}/status?status={valor}
+### PUT /{orderId}/status?status=valor
 
 - Acceso: DELIVERY, LOGISTICS o ADMIN
-- Uso: actualizar estado de pedido
+- Uso: cambiar estado de pedido
 
-### PUT /orders/{orderId}/accept
+### PUT /{orderId}/accept
 
 - Acceso: DELIVERY
 - Uso: aceptar pedido asignado
 
-### PUT /orders/{orderId}/reject?reason={texto}
+### PUT /{orderId}/reject?reason=texto
 
 - Acceso: DELIVERY
 - Uso: rechazar pedido asignado
 
-### PUT /orders/{orderId}/confirm-loaded
+### PUT /{orderId}/confirm-loaded
 
 - Acceso: DELIVERY
 - Uso: confirmar carga para salida
 
-### PUT /orders/{orderId}/deliver
+### PUT /{orderId}/deliver
 
 - Acceso: DELIVERY
-- Uso: marcar pedido como entregado
+- Uso: marcar entrega
 
-### PUT /orders/{orderId}/cancel?reason={texto}
+### PUT /{orderId}/cancel?reason=texto
 
 - Acceso: CUSTOMER o ADMIN
-- Uso: cancelar pedido segun reglas de estado
+- Uso: cancelar pedido segun reglas de dominio
 
----
+## 9. ETA
 
-## 9) ETA
+Base: /api/v1/eta
 
-### GET /orders/eta/{orderId}/calculate
-
-- Acceso: autenticado
-- Uso: calcular ETA
-
-### GET /orders/eta/{orderId}
+### GET /order/{orderId}/calculate
 
 - Acceso: autenticado
-- Uso: obtener ultimo ETA
+- Uso: calcular ETA actual
 
-### POST /orders/eta/delivery-agent/{deliveryAgentId}/recalculate
+### GET /order/{orderId}
+
+- Acceso: autenticado
+- Uso: recuperar ultimo ETA calculado
+
+### POST /delivery-agent/{deliveryAgentId}/recalculate
 
 - Acceso: DELIVERY, LOGISTICS o ADMIN
-- Uso: recalculo masivo de ETA por repartidor
+- Uso: recalculo de ETA para pedidos de un repartidor
 
----
+## 10. Administracion
 
-## 10) Administracion
+Base: /api/v1/admin
 
-### GET /admin/users
-
-- Acceso: ADMIN
-- Uso: listar usuarios
-
-### PUT /admin/users/{id}/roles
+### GET /users
 
 - Acceso: ADMIN
-- Uso: cambiar roles
+- Uso: listado de usuarios
 
-### POST /admin/users/internal
-
-- Acceso: ADMIN
-- Uso: crear cuentas internas (logistica, reparto, admin)
-
-### DELETE /admin/users/{id}
+### GET /users/active
 
 - Acceso: ADMIN
-- Uso: deshabilitar usuario
+- Uso: usuarios activos
 
-### GET /admin/users/active
-
-- Acceso: ADMIN
-- Uso: listar usuarios activos
-
-### GET /admin/users/disabled
+### GET /users/disabled
 
 - Acceso: ADMIN
-- Uso: listar usuarios deshabilitados
+- Uso: usuarios deshabilitados
 
-### POST /admin/users/{id}/reactivate
+### PUT /users/{id}/roles
+
+- Acceso: ADMIN
+- Uso: reasignar roles
+
+### POST /users/internal
+
+- Acceso: ADMIN
+- Uso: crear usuario interno
+
+### POST /users/{id}/reactivate
 
 - Acceso: ADMIN
 - Uso: reactivar usuario
 
-### GET /admin/stats/top-products
+### DELETE /users/{id}
 
 - Acceso: ADMIN
-- Uso: top productos del ultimo mes
+- Uso: desactivar usuario
 
-### GET /admin/stats/products-detailed
-
-- Acceso: ADMIN
-- Uso: detalle de productos top
-
-### GET /admin/stats/orders
+### GET /stats/top-products
 
 - Acceso: ADMIN
-- Uso: resumen de ordenes
+- Uso: ranking de productos
 
-### GET /admin/stats/users
+### GET /stats/products-detailed
+
+- Acceso: ADMIN
+- Uso: analitica detallada de productos
+
+### GET /stats/orders
+
+- Acceso: ADMIN
+- Uso: resumen de pedidos
+
+### GET /stats/users
 
 - Acceso: ADMIN
 - Uso: resumen de usuarios
 
-### GET /admin/orders/today
+### GET /orders/today
 
 - Acceso: ADMIN
-- Uso: ordenes del dia
+- Uso: pedidos del dia
 
----
+### GET /health
 
-## 11) Reglas de dominio COPLACA
+- Acceso: ADMIN
+- Uso: health interno de capa admin
 
-- El catalogo y ejemplos deben representar frutas y hortalizas.
-- La venta contempla cantidades decimales para productos por kilo.
-- En registro publico, el cliente debe proporcionar direccion para asignacion automatica de almacen.
-- La logistica administra stock, ofertas y asignacion de pedidos.
+## 11. Reglas de dominio
 
-Ultima actualizacion: Marzo 2026
+- Catalogo orientado a frutas y hortalizas.
+- Soporte de cantidades decimales para productos por kilo.
+- Registro publico restringido a perfil cliente.
+- Operacion logistica separada por roles DELIVERY y LOGISTICS.
+
+## 12. Mantenimiento de contrato
+
+Cada cambio en endpoints debe actualizar en el mismo ciclo:
+
+1. Este documento.
+2. docs/contracts/v1/openapi.yaml.
+3. docs/contracts/v1/coplaca-api-v1.postman_collection.json.
+
+Fecha de actualizacion: Marzo 2026
