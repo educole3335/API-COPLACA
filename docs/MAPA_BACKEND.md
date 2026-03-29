@@ -1,118 +1,148 @@
-# Mapa del Backend COPLACA - Modulos y Archivos
+# Mapa del Backend COPLACA
 
 ## Objetivo
 
-Este documento describe la estructura real del backend despues de la modularizacion Maven.
+Servir como guia de navegacion tecnica del repositorio para localizar rapidamente modulos, componentes clave y puntos de entrada del backend.
 
-## 1) Raiz del repositorio
+## Vista de repositorio
 
-- `README.md`: guia principal del proyecto.
-- `docs/GUIA_ARRANQUE_RAPIDO.md`: arranque rapido.
-- `docs/DATOS_INICIALES_BOOTSTRAP.md`: detalle de bootstrap de datos.
-- `docs/REFERENCIA_API.md`: referencia funcional completa de endpoints.
-- `doker/docker-compose.yml`: MySQL 8 + phpMyAdmin para entorno local.
-- `mvnw` y `mvnw.cmd`: Maven Wrapper.
+```text
+API-COPLACA/
+  api-coplaca/
+    pom.xml
+    product-domain/
+    user-domain/
+    order-domain/
+    recommendation-domain/
+    rest-server/
+  docs/
+  doker/
+  mvnw
+  mvnw.cmd
+```
 
-## 2) Reactor Maven
+## Elementos raiz relevantes
 
-El parent del reactor esta en:
+- README.md: entrada principal del proyecto.
+- docs/: documentacion funcional y tecnica.
+- doker/docker-compose.yml: infraestructura local MySQL + phpMyAdmin.
+- api-coplaca/pom.xml: parent del reactor Maven.
+- mvnw y mvnw.cmd: wrapper Maven sin instalacion global.
 
-- `api-coplaca/pom.xml`
+## Reactor Maven y dependencias internas
 
-Modulos declarados:
+Modulos del reactor:
 
-- `api-coplaca/product-domain`
-- `api-coplaca/user-domain`
-- `api-coplaca/order-domain`
-- `api-coplaca/recommendation-domain`
-- `api-coplaca/rest-server`
+- api-coplaca/product-domain
+- api-coplaca/user-domain
+- api-coplaca/order-domain
+- api-coplaca/recommendation-domain
+- api-coplaca/rest-server
 
-## 3) Modulo rest-server (capa web y seguridad)
+Patron de ensamblado:
+
+- Los modulos de dominio encapsulan negocio y persistencia.
+- rest-server expone HTTP y depende de los dominios.
+
+## Mapa del modulo rest-server
 
 Ruta base:
 
-- `api-coplaca/rest-server`
+- api-coplaca/rest-server
 
-Piezas principales:
+Piezas clave:
 
-- `src/main/java/com/coplaca/apirest/ApirestApplication.java`: punto de arranque.
-- `src/main/java/com/coplaca/apirest/config/SecurityConfig.java`: reglas de seguridad.
-- `src/main/java/com/coplaca/apirest/config/OpenApiConfig.java`: configuracion OpenAPI/Swagger.
-- `src/main/java/com/coplaca/apirest/config/DataInitializer.java`: carga de datos iniciales.
-- `src/main/java/com/coplaca/apirest/security/JwtTokenProvider.java`: generacion y validacion JWT.
-- `src/main/java/com/coplaca/apirest/security/JwtAuthenticationFilter.java`: autenticacion por token.
-- `src/main/resources/application.properties`: configuracion de datasource/JPA/JWT.
+- src/main/java/com/coplaca/apirest/ApirestApplication.java: bootstrap Spring Boot.
+- src/main/java/com/coplaca/apirest/config/SecurityConfig.java: autenticacion/autorizacion y CORS.
+- src/main/java/com/coplaca/apirest/config/OpenApiConfig.java: metadata OpenAPI.
+- src/main/java/com/coplaca/apirest/config/DataInitializer.java: datos semilla.
+- src/main/java/com/coplaca/apirest/security/JwtTokenProvider.java: emision y validacion de JWT.
+- src/main/java/com/coplaca/apirest/security/JwtAuthenticationFilter.java: filtro de autenticacion.
+- src/main/resources/application.properties: configuracion base de runtime.
 
-Controladores:
+## Controladores y rutas base
 
-- `controller/AuthController.java` -> `/auth`
-- `controller/ProductController.java` -> `/products`
-- `controller/SeasonalOfferController.java` -> `/offers`
-- `controller/WarehouseController.java` -> `/warehouses`
-- `controller/OrderController.java` -> `/orders`
-- `controller/UserController.java` -> `/users`
-- `controller/AdminController.java` -> `/admin`
+- AuthController: /auth
+- LandingPageController: /landing
+- ProductController: /api/v1/products
+- CategoryController: /api/v1/categories
+- SeasonalOfferController: /api/v1/offers
+- WarehouseController: /api/v1/warehouses
+- UserController: /api/v1/users
+- OrderController: /api/v1/orders
+- ETAController: /api/v1/eta
+- AdminController: /api/v1/admin
 
-Pruebas:
-
-- `src/test/java/com/coplaca/apirest/**`
-
-## 4) Dominios por modulo
+## Dominios funcionales
 
 ### product-domain
 
-- Entidades y repositorios de catalogo (productos, categorias, ofertas).
-- Servicios de negocio de producto y ofertas.
-- Mappers: `mapper/ProductMapper.java`, `mapper/ProductCategoryMapper.java`, `mapper/SeasonalOfferMapper.java`.
+- Modela productos, categorias y ofertas.
+- Gestiona reglas de stock, precio y disponibilidad.
 
 ### user-domain
 
-- Entidades de usuario, roles y direcciones.
-- Reglas de usuarios internos, clientes y estados de repartidor.
-- Mappers: `mapper/UserMapper.java`, `mapper/AddressMapper.java`.
+- Modela usuarios, roles y direcciones.
+- Gestiona estados de reparto y ciclo de vida de cuentas.
 
 ### order-domain
 
-- Entidades de pedido y lineas.
-- Reglas de ciclo de pedido, asignacion y transiciones por rol.
-- Mappers: `mapper/OrderMapper.java`, `mapper/OrderItemMapper.java`.
+- Modela pedidos y lineas.
+- Gestiona flujo operativo de despacho y entrega.
 
 ### recommendation-domain
 
-- Componentes de recomendaciones y contenido de landing.
+- Gestiona logica de contenido de landing y recomendaciones.
 
-## 5) Flujo tecnico simplificado
+## Donde buscar cada tipo de cambio
+
+### Nuevo endpoint
+
+1. Controller en rest-server.
+2. Service del dominio correspondiente.
+3. Repository/entity si requiere persistencia.
+4. DTO y mapper para contrato estable.
+5. Actualizacion de docs/REFERENCIA_API.md y contrato v1.
+
+### Cambio de seguridad
+
+1. SecurityConfig para reglas globales.
+2. @PreAuthorize en metodos de controller.
+3. Validacion de rol en pruebas y docs.
+
+### Cambio de datos iniciales
+
+1. DataInitializer.
+2. DATOS_INICIALES_BOOTSTRAP.md.
+3. Casos de prueba asociados.
+
+## Flujo operativo de una peticion
 
 ```text
-HTTP Request
-  -> rest-server/controller
-  -> servicio de dominio (modulo correspondiente)
-  -> repositorio JPA
-  -> base de datos
+Request HTTP
+  -> Controller (rest-server)
+  -> Service de dominio
+  -> Repository
+  -> Entity / DB
+  -> Mapper + DTO
+  -> Response HTTP
 ```
 
-## 6) Comandos de trabajo
-
-Compilar todo el reactor:
+## Comandos frecuentes
 
 ```powershell
+# Build completo
 .\mvnw.cmd -f api-coplaca\pom.xml clean verify
-```
 
-Ejecutar backend:
+# Tests
+.\mvnw.cmd -f api-coplaca\pom.xml test
 
-```powershell
+# Arranque backend
 $env:JWT_SECRET="dev-jwt-secret-change-me"
 .\mvnw.cmd -f api-coplaca\pom.xml -pl rest-server -am spring-boot:run
 ```
 
-Acceso OpenAPI/Swagger:
+## Enlaces operativos
 
-- `http://localhost:8080/swagger-ui/index.html`
-- `http://localhost:8080/v3/api-docs`
-
-Ejecutar tests:
-
-```powershell
-.\mvnw.cmd -f api-coplaca\pom.xml test
-```
+- Swagger UI: http://localhost:8080/swagger-ui/index.html
+- OpenAPI JSON: http://localhost:8080/v3/api-docs
