@@ -1,6 +1,7 @@
 package com.coplaca.apirest.controller;
 
 import com.coplaca.apirest.constants.ApiConstants;
+import com.coplaca.apirest.dto.OrderDTO;
 import com.coplaca.apirest.dto.SignUpRequest;
 import com.coplaca.apirest.dto.SuccessResponse;
 import com.coplaca.apirest.dto.UserDTO;
@@ -14,9 +15,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(ApiConstants.API_V1 + ApiConstants.ADMIN)
@@ -74,21 +78,25 @@ public class AdminController {
     @DeleteMapping("/users/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> disableUser(@PathVariable Long id) {
+        orderService.validateUserCanBeDisabled(id);
         userService.disableUser(id);
         return ResponseHelper.noContent();
     }
 
     @GetMapping(ApiConstants.STATS + "/top-products")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<SuccessResponse<List<String>>> topProductsLastMonth() {
+    public ResponseEntity<SuccessResponse<List<Map<String, Object>>>> topProductsLastMonth() {
         LocalDateTime since = LocalDateTime.now().minus(1, ChronoUnit.MONTHS);
-        return ResponseHelper.ok(orderService.getTopProductsSince(since));
+        Map<String, Object> stats = orderService.getTopProductsDetailedSince(since);
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> topProducts = (List<Map<String, Object>>) stats.get("topProducts");
+        return ResponseHelper.ok(topProducts);
     }
 
     @GetMapping(ApiConstants.STATS + "/products-detailed")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SuccessResponse<List<String>>> detailedProductStats() {
-        LocalDateTime since = LocalDateTime.now().minus(1, ChronoUnit.MONTHS);
+        LocalDateTime since = LocalDateTime.now().minus(3, ChronoUnit.MONTHS);
         return ResponseHelper.ok(orderService.getTopProductsSince(since));
     }
 
@@ -96,27 +104,60 @@ public class AdminController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SuccessResponse<Map<String, Object>>> orderStats(
             @RequestParam(required = false) String period) {
-        Map<String, Object> stats = new java.util.HashMap<>();
-        stats.put("totalOrders", 0);
-        stats.put("completedOrders", 0);
-        stats.put("averageOrderValue", 0);
-        stats.put("revenue", 0);
-        return ResponseHelper.ok(stats);
+        return ResponseHelper.ok(orderService.getOrderStatsSince(resolveStatsStart(period)));
     }
 
     @GetMapping(ApiConstants.STATS + "/users")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SuccessResponse<Map<String, Object>>> userStats() {
-        Map<String, Object> stats = new java.util.HashMap<>();
-        stats.put("totalUsers", userService.getAllUsers().size());
-        stats.put("activeUsers", 0);
-        stats.put("byRole", new java.util.HashMap<>());
+        List<UserDTO> users = userService.getAllUsers();
+
+        Map<String, Long> byRole = users.stream()
+                .flatMap(user -> user.getRoles().stream())
+                .collect(Collectors.groupingBy(role -> role.toUpperCase(Locale.ROOT), Collectors.counting()));
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalUsers", users.size());
+        stats.put("activeUsers", users.stream().filter(UserDTO::isEnabled).count());
+        stats.put("byRole", byRole);
         return ResponseHelper.ok(stats);
     }
 
     @GetMapping("/orders/today")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<SuccessResponse<List<Object>>> ordersToday() {
-        return ResponseHelper.ok(new java.util.ArrayList<>());
+    public ResponseEntity<SuccessResponse<List<OrderDTO>>> ordersToday() {
+        return ResponseHelper.ok(orderService.getOrdersToday());
+    }
+
+    @GetMapping("/health")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> healthCheck() {
+        try {
+            long userCount = userService.getAllUsers().size();
+            return ResponseEntity.ok(Map.of(
+                    "status", "UP",
+                    "database", "CONNECTED",
+                    "message", "Backend COPLACA conectado correctamente a la base de datos",
+                    "usersInDatabase", userCount,
+                    "timestamp", System.currentTimeMillis()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of(
+                    "status", "DOWN",
+                    "database", "ERROR",
+                    "message", "No se puede conectar a la base de datos: " + e.getMessage(),
+                    "timestamp", System.currentTimeMillis()
+            ));
+        }
+    }
+
+    private LocalDateTime resolveStatsStart(String period) {
+        String normalized = period == null ? "month" : period.trim().toLowerCase(Locale.ROOT);
+        return switch (normalized) {
+            case "day", "today" -> LocalDateTime.now().minus(1, ChronoUnit.DAYS);
+            case "week", "7d" -> LocalDateTime.now().minus(7, ChronoUnit.DAYS);
+            case "month", "30d", "" -> LocalDateTime.now().minus(1, ChronoUnit.MONTHS);
+            default -> LocalDateTime.now().minus(1, ChronoUnit.MONTHS);
+        };
     }
 }
