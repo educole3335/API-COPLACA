@@ -1,46 +1,120 @@
-# Backend COPLACA - Avance
+# Estado del Backend COPLACA
 
-Estado actualizado del backend modular.
+Estado tecnico consolidado del backend modular, con foco en capacidades activas, cobertura actual y prioridades de evolucion.
 
-## Resumen
+## Resumen ejecutivo
 
-- Arquitectura Maven multi-modulo consolidada.
-- Seguridad stateless con JWT y control de acceso por rol.
-- API HTTP operativa con documentacion OpenAPI/Swagger.
-- Datos base autogenerados con `DataInitializer` para entorno de desarrollo.
+- Arquitectura modular Maven en produccion de desarrollo local.
+- Seguridad stateless basada en JWT y autorizacion por roles.
+- API REST operativa con contrato OpenAPI en runtime.
+- Bootstrap de datos funcional para pruebas de negocio.
+- Base estable para continuar con pruebas de integracion y endurecimiento operativo.
 
-## Modulos activos
+## Estado por dimension
 
-- `product-domain`: catalogo, categorias, ofertas y reglas de producto.
-- `user-domain`: usuarios, roles, direcciones y saldo.
-- `order-domain`: pedidos, lineas, estados, checkout y pagos.
-- `recommendation-domain`: recomendaciones y contenido de landing.
-- `rest-server`: controladores, seguridad, bootstrap y configuracion.
+### Arquitectura
+
+Estado: Completa
+
+- Reactor Maven multi-modulo funcional.
+- Separacion de responsabilidades entre dominios y capa web.
+- Paquetes y dependencias alineados a la modularizacion.
+
+### Seguridad
+
+Estado: Operativa
+
+- Login y registro publico de cliente activos.
+- JWT requerido para operaciones privadas.
+- Control de acceso por rol en endpoints de negocio.
+- CORS configurable por propiedad de aplicacion.
+
+### API y contrato
+
+Estado: Operativa
+
+- Endpoints principales de autenticacion, catalogo, usuarios, pedidos y administracion activos.
+- Swagger UI y OpenAPI JSON disponibles en runtime.
+- Contrato versionado bajo docs/contracts/v1 para integraciones.
+
+### Datos y bootstrap
+
+Estado: Operativa
+
+- DataInitializer crea datos base idempotentes para desarrollo.
+- Roles, almacenes, categorias, productos y usuarios semilla disponibles.
+
+### Calidad y pruebas
+
+Estado: Parcial
+
+- Suite de pruebas existente en rest-server.
+- Falta ampliar cobertura de integracion end-to-end en flujos criticos.
 
 ## Capacidades implementadas
 
-- Flujo de autenticacion y autorizacion con JWT.
-- Endpoints publicos en catalogo (`/products`, `/offers`, `/warehouses`).
-- Flujo de pedidos con validaciones por actor y estados.
-- Soporte de pago por `PRESENTIAL`, `CARD` y `BALANCE` en checkout.
-- Endpoints de saldo de usuario (`top-up` y metodos disponibles).
-- Busqueda de productos con fallback a catalogo activo cuando la consulta esta vacia.
+### Identidad y acceso
 
-## Calidad y ejecucion
+- Autenticacion con email y password.
+- Emision de token JWT.
+- Registro publico de clientes con direccion obligatoria.
 
-Pruebas unitarias disponibles principalmente en `rest-server`.
+### Catalogo
+
+- Consulta de productos activos y detalle por identificador.
+- Filtrado por categoria.
+- Busqueda textual en catalogo.
+- Gestion de stock y precio para roles internos.
+
+### Pedidos
+
+- Creacion de pedidos por cliente.
+- Consulta por usuario, cliente, almacen y repartidor.
+- Asignacion de pedidos a agentes de entrega.
+- Transiciones de estado controladas por rol.
+- Soporte de consulta de ETA por pedido.
+
+### Administracion
+
+- Gestion de usuarios internos.
+- Activacion, desactivacion y reasignacion de roles.
+- Endpoints de estadisticas operativas.
+
+## Indicadores tecnicos actuales
+
+- Build: ejecutable por reactor Maven.
+- Test: ejecutable en proyecto completo.
+- Documentacion: disponible en docs y contrato versionado.
+- Entorno local: soporta H2 y MySQL con Docker.
+
+## Riesgos y brechas
+
+### Cobertura de pruebas
+
+- Falta ampliar pruebas de integracion HTTP y escenarios de autorizacion por rol.
+
+### Consistencia documental
+
+- Toda alta/cambio de endpoint debe sincronizar referencia API y contrato versionado.
+
+### Rendimiento y concurrencia
+
+- Recomendado validar escenarios concurrentes en stock y flujo de pedidos.
+
+## Prioridades recomendadas
+
+1. Incrementar pruebas de integracion de auth, pedidos y administracion.
+2. Incorporar pruebas de regresion de permisos por rol.
+3. Formalizar validacion de contrato OpenAPI contra endpoints reales en CI.
+4. Añadir metricas operativas y health checks ampliados para despliegue.
+
+## Comandos base de verificacion
 
 ```powershell
+.\mvnw.cmd -f api-coplaca\pom.xml clean verify
 .\mvnw.cmd -f api-coplaca\pom.xml test
 ```
 
-OpenAPI en runtime:
+## Fecha de corte
 
-- `GET /v3/api-docs`
-- `/swagger-ui/index.html`
-
-## Brechas actuales
-
-- Aumentar pruebas de integracion HTTP para endpoints criticos.
-- Incorporar pruebas de concurrencia sobre stock y pedidos.
-- Mantener alineados contrato versionado (`docs/contracts/v1`) y anotaciones OpenAPI en runtime.
+- Marzo 2026
