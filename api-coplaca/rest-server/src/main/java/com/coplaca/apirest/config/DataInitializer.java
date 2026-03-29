@@ -9,8 +9,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 @Configuration
@@ -23,6 +27,7 @@ public class DataInitializer {
             UserRepository userRepository,
             ProductCategoryRepository categoryRepository,
             ProductRepository productRepository,
+            OrderRepository orderRepository,
             PasswordEncoder passwordEncoder,
             @Value("${app.bootstrap.admin.email:admin@coplaca.local}") String adminEmail,
             @Value("${app.bootstrap.admin.password:Admin12345!}") String adminPassword) {
@@ -359,6 +364,43 @@ public class DataInitializer {
                 userRepository.save(repartidor2);
             }
 
+            Warehouse defaultWarehouse = warehouseRepository.findByIsActiveTrue().stream().findFirst().orElseThrow();
+            Role deliveryRole = roleRepository.findByName("ROLE_DELIVERY").orElseThrow();
+            createDeliveryUserIfMissing(
+                    userRepository,
+                    passwordEncoder,
+                    deliveryRole,
+                    defaultWarehouse,
+                    "luis.reparto@example.com",
+                    "Luis",
+                    "Herrera",
+                    "695334455",
+                    "Calle Los Repartos",
+                    "21",
+                    "Santa Cruz de Tenerife",
+                    "38004",
+                    "Santa Cruz de Tenerife",
+                    28.4661,
+                    -16.2574
+            );
+            createDeliveryUserIfMissing(
+                    userRepository,
+                    passwordEncoder,
+                    deliveryRole,
+                    defaultWarehouse,
+                    "carmen.reparto@example.com",
+                    "Carmen",
+                    "Pérez",
+                    "695778899",
+                    "Avenida Maritima",
+                    "108",
+                    "Santa Cruz de Tenerife",
+                    "38005",
+                    "Santa Cruz de Tenerife",
+                    28.4593,
+                    -16.2490
+            );
+
             // Inicializar Personal de Logística
             if (userRepository.findByEmail("logistica@example.com").isEmpty()) {
                 Warehouse warehouse = warehouseRepository.findByIsActiveTrue().stream().findFirst().orElseThrow();
@@ -406,8 +448,123 @@ public class DataInitializer {
                 logistica2.setAddress(logistica2Address);
                 userRepository.save(logistica2);
             }
+
+                        seedConfirmedOrdersForAssignment(orderRepository, userRepository, productRepository, defaultWarehouse);
         };
     }
+
+        private void createDeliveryUserIfMissing(
+                        UserRepository userRepository,
+                        PasswordEncoder passwordEncoder,
+                        Role deliveryRole,
+                        Warehouse warehouse,
+                        String email,
+                        String firstName,
+                        String lastName,
+                        String phone,
+                        String street,
+                        String streetNumber,
+                        String city,
+                        String postalCode,
+                        String province,
+                        double latitude,
+                        double longitude
+        ) {
+                if (userRepository.findByEmail(email).isPresent()) {
+                        return;
+                }
+
+                User deliveryUser = new User();
+                deliveryUser.setEmail(email);
+                deliveryUser.setPassword(passwordEncoder.encode("Reparto123!"));
+                deliveryUser.setFirstName(firstName);
+                deliveryUser.setLastName(lastName);
+                deliveryUser.setPhoneNumber(phone);
+                deliveryUser.setEnabled(true);
+                deliveryUser.setWarehouse(warehouse);
+                deliveryUser.setDeliveryStatus(DeliveryAgentStatus.AT_WAREHOUSE);
+                deliveryUser.setRoles(Set.of(deliveryRole));
+
+                Address address = new Address();
+                address.setStreet(street);
+                address.setStreetNumber(streetNumber);
+                address.setCity(city);
+                address.setPostalCode(postalCode);
+                address.setProvince(province);
+                address.setLatitude(latitude);
+                address.setLongitude(longitude);
+                deliveryUser.setAddress(address);
+
+                userRepository.save(deliveryUser);
+        }
+
+        private void seedConfirmedOrdersForAssignment(
+                        OrderRepository orderRepository,
+                        UserRepository userRepository,
+                        ProductRepository productRepository,
+                        Warehouse warehouse
+        ) {
+                if (!orderRepository.findByWarehouseIdAndStatus(warehouse.getId(), OrderStatus.CONFIRMED).isEmpty()) {
+                        return;
+                }
+
+                Optional<User> customerOpt = userRepository.findByEmail("cliente@example.com");
+                if (customerOpt.isEmpty()) {
+                        return;
+                }
+
+                List<Product> products = productRepository.findByIsActiveTrue();
+                if (products.isEmpty()) {
+                        return;
+                }
+
+                User customer = customerOpt.get();
+                Product firstProduct = products.get(0);
+                Product secondProduct = products.size() > 1 ? products.get(1) : firstProduct;
+                Product thirdProduct = products.size() > 2 ? products.get(2) : secondProduct;
+
+                createConfirmedOrder(orderRepository, customer, warehouse, firstProduct, new BigDecimal("3.000"), LocalDateTime.now().minusHours(6));
+                createConfirmedOrder(orderRepository, customer, warehouse, secondProduct, new BigDecimal("2.000"), LocalDateTime.now().minusHours(4));
+                createConfirmedOrder(orderRepository, customer, warehouse, thirdProduct, new BigDecimal("5.000"), LocalDateTime.now().minusHours(2));
+        }
+
+        private void createConfirmedOrder(
+                        OrderRepository orderRepository,
+                        User customer,
+                        Warehouse warehouse,
+                        Product product,
+                        BigDecimal quantity,
+                        LocalDateTime createdAt
+        ) {
+                BigDecimal subtotal = product.getUnitPrice().multiply(quantity).setScale(2, java.math.RoundingMode.HALF_UP);
+                BigDecimal deliveryFee = new BigDecimal("4.99");
+
+                Order order = new Order();
+                order.setOrderNumber("BOOT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+                order.setCustomer(customer);
+                order.setWarehouse(warehouse);
+                order.setDeliveryAddress(customer.getAddress());
+                order.setStatus(OrderStatus.CONFIRMED);
+                order.setPaymentMethod("CARD");
+                order.setPaymentStatus("COMPLETED");
+                order.setSubtotal(subtotal);
+                order.setDiscount(BigDecimal.ZERO);
+                order.setDeliveryFee(deliveryFee);
+                order.setTotalPrice(subtotal.add(deliveryFee));
+                order.setCreatedAt(createdAt);
+                order.setUpdatedAt(createdAt);
+                order.setEstimatedDeliveryTime(createdAt.plusMinutes(90));
+
+                OrderItem item = new OrderItem();
+                item.setOrder(order);
+                item.setProduct(product);
+                item.setQuantity(quantity);
+                item.setUnitPrice(product.getUnitPrice());
+                item.setSubtotal(subtotal);
+                order.getItems().add(item);
+
+                orderRepository.save(order);
+        }
 
     private Warehouse createWarehouse(String name, String address, double latitude, double longitude,
                                       String phoneNumber, String managerName) {
