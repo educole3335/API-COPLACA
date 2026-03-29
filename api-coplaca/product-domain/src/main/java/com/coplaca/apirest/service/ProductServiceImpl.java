@@ -116,6 +116,20 @@ public class ProductServiceImpl implements ProductService {
         Product updated = productRepository.save(product);
         return convertToDTO(updated);
     }
+
+    @Override
+    public ProductDTO adjustPrice(Long id, BigDecimal newUnitPrice) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+
+        if (newUnitPrice == null || newUnitPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Unit price must be greater than zero");
+        }
+
+        product.setUnitPrice(newUnitPrice);
+        Product updated = productRepository.save(product);
+        return convertToDTO(updated);
+    }
     
     private ProductDTO convertToDTO(Product product) {
         Optional<SeasonalOffer> offer = offerService.getActiveOfferByProductId(product.getId());
