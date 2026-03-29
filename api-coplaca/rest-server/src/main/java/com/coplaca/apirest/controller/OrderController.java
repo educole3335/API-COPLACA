@@ -13,7 +13,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 @RestController
 @RequestMapping(ApiConstants.API_V1 + ApiConstants.ORDERS)
@@ -69,6 +73,14 @@ public class OrderController {
         return ResponseHelper.ok(orderService.getPendingOrdersByWarehouse(warehouseId, authentication.getName()));
     }
 
+    @GetMapping("/warehouse/{warehouseId}/all")
+    @PreAuthorize("hasAnyRole('LOGISTICS', 'ADMIN')")
+    public ResponseEntity<SuccessResponse<List<OrderDTO>>> getWarehouseAllOrders(
+            @PathVariable Long warehouseId,
+            Authentication authentication) {
+        return ResponseHelper.ok(orderService.getAllOrdersByWarehouse(warehouseId, authentication.getName()));
+    }
+
     @GetMapping("/warehouse/{warehouseId}/confirmed")
     @PreAuthorize("hasAnyRole('LOGISTICS', 'ADMIN')")
     public ResponseEntity<SuccessResponse<List<OrderDTO>>> getWarehouseConfirmedOrders(
@@ -83,6 +95,15 @@ public class OrderController {
             @PathVariable Long warehouseId,
             Authentication authentication) {
         return ResponseHelper.ok(orderService.getInTransitOrdersByWarehouse(warehouseId, authentication.getName()));
+    }
+
+    @GetMapping("/warehouse/{warehouseId}/stats")
+    @PreAuthorize("hasAnyRole('LOGISTICS', 'ADMIN')")
+    public ResponseEntity<SuccessResponse<Map<String, Object>>> getWarehouseStats(
+            @PathVariable Long warehouseId,
+            @RequestParam(required = false) String period,
+            Authentication authentication) {
+        return ResponseHelper.ok(orderService.getWarehouseStats(warehouseId, authentication.getName(), resolveStatsStart(period)));
     }
 
     @PutMapping("/{orderId}/assign/{deliveryAgentId}")
@@ -153,5 +174,15 @@ public class OrderController {
             @RequestParam(required = false) String reason,
             Authentication authentication) {
         return ResponseHelper.ok(orderService.cancelOrder(orderId, reason, authentication.getName()), "Order cancelled");
+    }
+
+    private LocalDateTime resolveStatsStart(String period) {
+        String normalized = period == null ? "month" : period.trim().toLowerCase(Locale.ROOT);
+        return switch (normalized) {
+            case "day", "today" -> LocalDateTime.now().minus(1, ChronoUnit.DAYS);
+            case "week", "7d" -> LocalDateTime.now().minus(7, ChronoUnit.DAYS);
+            case "month", "30d", "" -> LocalDateTime.now().minus(1, ChronoUnit.MONTHS);
+            default -> LocalDateTime.now().minus(1, ChronoUnit.MONTHS);
+        };
     }
 }
