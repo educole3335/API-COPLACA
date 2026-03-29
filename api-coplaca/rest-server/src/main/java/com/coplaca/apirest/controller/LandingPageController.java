@@ -7,11 +7,13 @@ import com.coplaca.apirest.dto.SuccessResponse;
 import com.coplaca.apirest.service.RecommendationService;
 import com.coplaca.apirest.util.ResponseHelper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/landing")
@@ -36,5 +38,14 @@ public class LandingPageController {
             Authentication authentication) {
         String userEmail = authentication != null ? authentication.getName() : "anonymous";
         return ResponseHelper.ok(recommendationService.getRecommendations(userEmail));
+    }
+
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, Object>> healthCheck() {
+        return ResponseEntity.ok(Map.of(
+                "status", "UP",
+                "message", "Backend COPLACA conectado correctamente",
+                "timestamp", System.currentTimeMillis()
+        ));
     }
 }
