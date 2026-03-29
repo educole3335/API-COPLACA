@@ -71,4 +71,12 @@ public class ProductController {
             @RequestParam BigDecimal delta) {
         return ResponseHelper.ok(productService.adjustStock(id, delta), "Stock adjusted successfully");
     }
+
+    @PatchMapping("/{id}/price")
+    @PreAuthorize("hasAnyRole('LOGISTICS','ADMIN')")
+    public ResponseEntity<SuccessResponse<ProductDTO>> adjustPrice(
+            @PathVariable Long id,
+            @RequestParam BigDecimal value) {
+        return ResponseHelper.ok(productService.adjustPrice(id, value), "Price updated successfully");
+    }
 }
