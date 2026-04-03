@@ -27,6 +27,8 @@ public class OrderDTO {
     private Long deliveryAgentId;
     private String deliveryAgentName;
     private Long deliveryAddressId;
+    private AddressDTO deliveryAddress;
+    private String deliveryAddressLabel;
     private LocalDateTime estimatedDeliveryTime;
     private LocalDateTime actualDeliveryTime;
     private String paymentMethod;
