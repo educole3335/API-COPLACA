@@ -1,2 +1,145 @@
-"# API-COPLACA" hjfghfghfgh
-"# API-COPLACA" 
+# API COPLACA
+
+Backend de e-commerce de COPLACA para venta minorista de frutas y hortalizas, con gestion de usuarios, pedidos y logistica de reparto.
+
+## Estado actual
+
+- Arquitectura: Maven multi-modulo
+- Java: 21
+- Framework: Spring Boot 4.0.2
+- Seguridad: JWT + Spring Security
+- Documentacion API: OpenAPI 3 + Swagger UI
+- Base de datos por defecto: H2 en memoria
+- Base de datos opcional: MySQL 8 (Docker)
+
+## Estructura del proyecto
+
+```text
+api-coplaca/
+  pom.xml                  # Parent del reactor Maven
+  product-domain/          # Dominio de productos y categorias
+  user-domain/             # Dominio de usuarios, roles y direcciones
+  order-domain/            # Dominio de pedidos y flujo logistico
+  recommendation-domain/   # Dominio de recomendaciones y landing
+  rest-server/             # Capa HTTP, seguridad y bootstrap de datos
+```
+
+Patrones tecnicos relevantes:
+
+- Mappers por dominio para conversion Entity <-> DTO.
+- Lombok para reducir codigo repetitivo en entidades y DTOs.
+
+## Requisitos
+
+- JDK 21
+- Docker Desktop (solo si usaras MySQL)
+
+## Ejecutar rapido (H2 en memoria)
+
+Desde la raiz del repositorio (`API-COPLACA`):
+
+```powershell
+$env:JWT_SECRET="dev-jwt-secret-change-me"
+.\mvnw.cmd -f api-coplaca\pom.xml -pl rest-server -am spring-boot:run
+```
+
+La API inicia en:
+
+- http://localhost:8080
+
+Consola H2 (en modo desarrollo):
+
+- http://localhost:8080/h2-console
+
+OpenAPI/Swagger:
+
+- Swagger UI: http://localhost:8080/swagger-ui/index.html
+- OpenAPI JSON: http://localhost:8080/v3/api-docs
+
+## Ejecutar con MySQL (Docker)
+
+1. Levanta MySQL y phpMyAdmin:
+
+```powershell
+cd doker
+docker-compose up -d
+cd ..
+```
+
+2. Arranca el backend apuntando a MySQL:
+
+```powershell
+$env:JWT_SECRET="dev-jwt-secret-change-me"
+$env:DB_URL="jdbc:mysql://localhost:3306/proyecto?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+$env:DB_USER="root"
+$env:DB_PASSWORD="1234qwerty"
+$env:DB_DRIVER="com.mysql.cj.jdbc.Driver"
+.\mvnw.cmd -f api-coplaca\pom.xml -pl rest-server -am spring-boot:run
+```
+
+phpMyAdmin:
+
+- http://localhost:8081
+
+## Credenciales iniciales (DataInitializer)
+
+- Admin
+  - Email: admin@coplaca.local
+  - Password: Admin12345!
+- Cliente
+  - Email: cliente@example.com
+  - Password: Cliente123!
+- Cliente
+  - Email: maria@example.com
+  - Password: Maria123!
+- Repartidor
+  - Email: repartidor@example.com
+  - Password: Repartidor123!
+- Repartidor
+  - Email: ana@example.com
+  - Password: Ana123!
+- Logistica
+  - Email: logistica@example.com
+  - Password: Logistica123!
+- Logistica
+  - Email: alejandro@example.com
+  - Password: Alejandro123!
+
+## Endpoints base
+
+- `POST /auth/login`
+- `POST /auth/signup`
+- `GET /products/**` (publico)
+- `GET /offers/**` (publico)
+- `GET /warehouses/**` (publico)
+- `GET/POST /orders/**` (autenticado, segun rol)
+- `GET/PUT /users/**` (autenticado)
+- `GET/POST /admin/**` (admin)
+
+## Build y tests
+
+Compilar todo el reactor:
+
+```powershell
+.\mvnw.cmd -f api-coplaca\pom.xml clean verify
+```
+
+Ejecutar pruebas:
+
+```powershell
+.\mvnw.cmd -f api-coplaca\pom.xml test
+```
+
+## Documentacion interna
+
+- `docs/INDICE_DOCUMENTACION.md`: indice maestro con objetivo, audiencia y uso de cada documento.
+- `docs/GUIA_OPERATIVA_BACKEND.md`: guia operativa consolidada (estructura, instalaciones, arranque, extensiones, troubleshooting).
+- `docs/GUIA_ARRANQUE_RAPIDO.md`: guia corta para levantar el proyecto.
+- `docs/DATOS_INICIALES_BOOTSTRAP.md`: detalle de datos de arranque y bootstrap.
+- `docs/ARQUITECTURA_MODULAR.md`: contexto de la modularizacion.
+- `docs/REFERENCIA_API.md`: referencia completa de endpoints y reglas de acceso.
+- `docs/contracts/v1/openapi.yaml`: contrato OpenAPI versionado.
+- `docs/contracts/v1/coplaca-api-v1.postman_collection.json`: coleccion Postman versionada.
+- `docs/ESTADO_BACKEND.md`: estado funcional y tecnico del backend.
+- `docs/MAPA_BACKEND.md`: mapa actual de modulos y capas.
+- `docs/PRUEBAS_DATOS_AVANZADOS.md`: ejemplos SQL/API para pruebas avanzadas.

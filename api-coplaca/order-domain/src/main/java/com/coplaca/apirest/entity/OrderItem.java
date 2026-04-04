@@ -1,0 +1,36 @@
+package com.coplaca.apirest.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "order_items")
+public class OrderItem {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @ManyToOne
+    @JoinColumn(name = "order_id", nullable = false)
+    private Order order;
+    
+    @ManyToOne
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
+    
+    @Column(nullable = false, precision = 12, scale = 3)
+    private BigDecimal quantity; // Quantity in kg or units
+    
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal unitPrice;
+    
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal subtotal;
+}

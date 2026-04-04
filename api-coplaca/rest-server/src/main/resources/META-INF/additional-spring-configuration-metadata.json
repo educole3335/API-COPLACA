@@ -1,0 +1,24 @@
+{
+  "properties": [
+    {
+      "name": "app.jwt-secret",
+      "type": "java.lang.String",
+      "description": "JWT secret key used to sign tokens."
+    },
+    {
+      "name": "app.jwt-expiration-ms",
+      "type": "java.lang.Integer",
+      "description": "JWT token expiration in milliseconds."
+    },
+    {
+      "name": "app.bootstrap.admin.email",
+      "type": "java.lang.String",
+      "description": "Bootstrap admin account email."
+    },
+    {
+      "name": "app.bootstrap.admin.password",
+      "type": "java.lang.String",
+      "description": "Bootstrap admin account password."
+    }
+  ]
+}

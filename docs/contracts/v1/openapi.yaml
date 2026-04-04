@@ -1,0 +1,245 @@
+openapi: 3.0.3
+info:
+  title: Coplaca API
+  description: Contrato versionado para autenticacion, pedidos y administracion por roles.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Local
+tags:
+  - name: Auth
+  - name: Orders
+  - name: Admin
+paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login correcto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Credenciales invalidas
+  /auth/signup:
+    post:
+      tags: [Auth]
+      summary: Registro publico de cliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignUpRequest'
+      responses:
+        '200':
+          description: Registro correcto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Solicitud invalida
+  /orders:
+    post:
+      tags: [Orders]
+      summary: Crear pedido (ROLE_CUSTOMER)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '200':
+          description: Pedido creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDTO'
+        '403':
+          description: Rol no autorizado
+  /orders/my:
+    get:
+      tags: [Orders]
+      summary: Listar pedidos del usuario autenticado
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de pedidos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderDTO'
+        '403':
+          description: Rol no autorizado
+  /admin/users:
+    get:
+      tags: [Admin]
+      summary: Listar usuarios (ROLE_ADMIN)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de usuarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserSummary'
+        '403':
+          description: Rol no autorizado
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        type:
+          type: string
+        id:
+          type: integer
+          format: int64
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+    SignUpRequest:
+      type: object
+      required: [email, password, firstName, lastName, address]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phoneNumber:
+          type: string
+        role:
+          type: string
+          example: ROLE_CUSTOMER
+        address:
+          $ref: '#/components/schemas/Address'
+    Address:
+      type: object
+      required: [street, streetNumber, city, postalCode, province]
+      properties:
+        street:
+          type: string
+        streetNumber:
+          type: string
+        apartment:
+          type: string
+        city:
+          type: string
+        postalCode:
+          type: string
+        province:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        additionalInfo:
+          type: string
+    CreateOrderRequest:
+      type: object
+      required: [items]
+      properties:
+        deliveryAddressId:
+          type: integer
+          format: int64
+        paymentMethod:
+          type: string
+          example: CARD
+        paymentStatus:
+          type: string
+          example: PENDING
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateOrderItemRequest'
+    CreateOrderItemRequest:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId:
+          type: integer
+          format: int64
+        quantity:
+          type: number
+          format: double
+    OrderDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        orderNumber:
+          type: string
+        status:
+          type: string
+        totalPrice:
+          type: number
+          format: double
+        createdAt:
+          type: string
+          format: date-time
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        enabled:
+          type: boolean
