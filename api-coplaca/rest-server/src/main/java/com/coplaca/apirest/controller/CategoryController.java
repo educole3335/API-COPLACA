@@ -7,6 +7,8 @@ import com.coplaca.apirest.entity.ProductCategory;
 import com.coplaca.apirest.repository.ProductCategoryRepository;
 import com.coplaca.apirest.repository.ProductRepository;
 import com.coplaca.apirest.util.ResponseHelper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -16,6 +18,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(ApiConstants.API_V1 + ApiConstants.CATEGORIES)
+@Tag(name = "03 - Catálogo", description = "Gestión de categorías de productos")
 @RequiredArgsConstructor
 public class CategoryController {
 
@@ -23,6 +26,7 @@ public class CategoryController {
     private final ProductRepository productRepository;
 
     @GetMapping
+    @Operation(summary = "Listar categorías", description = "Devuelve todas las categorías de productos con su contador asociado")
     public ResponseEntity<SuccessResponse<List<ProductCategoryDTO>>> getAllCategories() {
         List<ProductCategoryDTO> categories = categoryRepository.findAll().stream()
                 .map(this::mapToDTO)
@@ -31,6 +35,7 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Obtener categoría por ID", description = "Recupera el detalle de una categoría concreta")
     public ResponseEntity<SuccessResponse<ProductCategoryDTO>> getCategoryById(@PathVariable Long id) {
         return categoryRepository.findById(id)
                 .map(this::mapToDTO)
@@ -40,6 +45,7 @@ public class CategoryController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('LOGISTICS', 'ADMIN')")
+    @Operation(summary = "Crear categoría", description = "Alta de categorías para personal interno autorizado")
     public ResponseEntity<SuccessResponse<ProductCategoryDTO>> createCategory(@RequestBody ProductCategoryDTO category) {
         ProductCategory entity = new ProductCategory();
         entity.setName(category.getName());
@@ -51,6 +57,7 @@ public class CategoryController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('LOGISTICS', 'ADMIN')")
+    @Operation(summary = "Actualizar categoría", description = "Actualiza nombre, descripción e icono de una categoría")
     public ResponseEntity<SuccessResponse<ProductCategoryDTO>> updateCategory(
             @PathVariable Long id,
             @RequestBody ProductCategoryDTO categoryDetails) {
@@ -67,6 +74,7 @@ public class CategoryController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Eliminar categoría", description = "Elimina una categoría si ya no se utiliza")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
         if (!categoryRepository.existsById(id)) {
             throw new com.coplaca.apirest.exception.ResourceNotFoundException("Category not found with id: " + id);

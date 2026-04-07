@@ -8,6 +8,8 @@ import com.coplaca.apirest.dto.UserDTO;
 import com.coplaca.apirest.service.OrderService;
 import com.coplaca.apirest.service.UserService;
 import com.coplaca.apirest.util.ResponseHelper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,6 +26,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(ApiConstants.API_V1 + ApiConstants.ADMIN)
+@Tag(name = "06 - Administración", description = "Gestión administrativa, analítica y health interno")
 @RequiredArgsConstructor
 public class AdminController {
 
@@ -32,12 +35,14 @@ public class AdminController {
 
     @GetMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Listar usuarios", description = "Devuelve todos los usuarios del sistema")
     public ResponseEntity<SuccessResponse<List<UserDTO>>> listUsers() {
         return ResponseHelper.ok(userService.getAllUsers());
     }
 
     @GetMapping("/users" + ApiConstants.ACTIVE)
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Usuarios activos", description = "Lista los usuarios habilitados")
     public ResponseEntity<SuccessResponse<List<UserDTO>>> getActiveUsers() {
         List<UserDTO> users = userService.getAllUsers().stream()
                 .filter(UserDTO::isEnabled)
@@ -47,6 +52,7 @@ public class AdminController {
 
     @GetMapping("/users" + ApiConstants.DISABLED)
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Usuarios deshabilitados", description = "Lista los usuarios desactivados desde administración")
     public ResponseEntity<SuccessResponse<List<UserDTO>>> getDisabledUsers() {
         List<UserDTO> users = userService.getAllUsers().stream()
                 .filter(u -> !u.isEnabled())
@@ -56,6 +62,7 @@ public class AdminController {
 
     @PutMapping("/users/{id}/roles")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Cambiar roles de usuario", description = "Asigna un nuevo conjunto de roles a un usuario")
     public ResponseEntity<SuccessResponse<UserDTO>> changeRoles(
             @PathVariable Long id,
             @RequestBody List<String> roleNames) {
@@ -64,6 +71,7 @@ public class AdminController {
 
     @PostMapping("/users/internal")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Crear usuario interno", description = "Crea cuentas internas de logística, reparto o administración")
     public ResponseEntity<SuccessResponse<UserDTO>> createInternalUser(@RequestBody SignUpRequest request) {
         UserDTO user = userService.getUserById(userService.createManagedUser(request).getId());
         return ResponseHelper.created(user, "Internal user created successfully");
@@ -71,12 +79,14 @@ public class AdminController {
 
     @PostMapping("/users/{id}/reactivate")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Reactivar usuario", description = "Habilita nuevamente una cuenta desactivada")
     public ResponseEntity<SuccessResponse<UserDTO>> reactivateUser(@PathVariable Long id) {
         return ResponseHelper.ok(userService.reactivateUser(id), "User reactivated successfully");
     }
 
     @DeleteMapping("/users/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Desactivar usuario", description = "Desactiva una cuenta validando dependencias operativas")
     public ResponseEntity<Void> disableUser(@PathVariable Long id) {
         orderService.validateUserCanBeDisabled(id);
         userService.disableUser(id);
@@ -85,6 +95,7 @@ public class AdminController {
 
     @GetMapping(ApiConstants.STATS + "/top-products")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Top productos", description = "Devuelve el ranking detallado de productos más vendidos")
     public ResponseEntity<SuccessResponse<List<Map<String, Object>>>> topProductsLastMonth() {
         LocalDateTime since = LocalDateTime.now().minus(1, ChronoUnit.MONTHS);
         Map<String, Object> stats = orderService.getTopProductsDetailedSince(since);
@@ -95,6 +106,7 @@ public class AdminController {
 
     @GetMapping(ApiConstants.STATS + "/products-detailed")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Estadísticas detalladas de productos", description = "Lista el ranking resumido de productos por ventas")
     public ResponseEntity<SuccessResponse<List<String>>> detailedProductStats() {
         LocalDateTime since = LocalDateTime.now().minus(3, ChronoUnit.MONTHS);
         return ResponseHelper.ok(orderService.getTopProductsSince(since));
@@ -102,6 +114,7 @@ public class AdminController {
 
     @GetMapping(ApiConstants.STATS + "/orders")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Estadísticas de pedidos", description = "Resume pedidos, ingresos y valores medios por periodo")
     public ResponseEntity<SuccessResponse<Map<String, Object>>> orderStats(
             @RequestParam(required = false) String period) {
         return ResponseHelper.ok(orderService.getOrderStatsSince(resolveStatsStart(period)));
@@ -109,6 +122,7 @@ public class AdminController {
 
     @GetMapping(ApiConstants.STATS + "/users")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Estadísticas de usuarios", description = "Resume usuarios totales, activos y distribución por rol")
     public ResponseEntity<SuccessResponse<Map<String, Object>>> userStats() {
         List<UserDTO> users = userService.getAllUsers();
 
@@ -125,12 +139,14 @@ public class AdminController {
 
     @GetMapping("/orders/today")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Pedidos de hoy", description = "Devuelve los pedidos creados durante el día actual")
     public ResponseEntity<SuccessResponse<List<OrderDTO>>> ordersToday() {
         return ResponseHelper.ok(orderService.getOrdersToday());
     }
 
     @GetMapping("/health")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Health administrativo", description = "Verifica conectividad con la base de datos desde administración")
     public ResponseEntity<Map<String, Object>> healthCheck() {
         try {
             long userCount = userService.getAllUsers().size();

@@ -10,6 +10,11 @@ import com.coplaca.apirest.exception.ResourceNotFoundException;
 import com.coplaca.apirest.repository.RoleRepository;
 import com.coplaca.apirest.security.JwtTokenProvider;
 import com.coplaca.apirest.service.UserService;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -27,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
+@Tag(name = "01 - Autenticación", description = "Inicio de sesión y registro público de clientes")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -36,7 +42,14 @@ public class AuthController {
     private final JwtTokenProvider tokenProvider;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
+        @Operation(summary = "Iniciar sesión", description = "Autentica al usuario y devuelve un JWT junto con sus datos básicos")
+        @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Autenticación correcta"),
+            @ApiResponse(responseCode = "401", description = "Credenciales inválidas"),
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida")
+        })
+        public ResponseEntity<LoginResponse> login(
+            @Parameter(description = "Credenciales de acceso") @RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.getEmail(),
@@ -66,7 +79,14 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<LoginResponse> signup(@RequestBody SignUpRequest signUpRequest) {
+        @Operation(summary = "Registrar cliente", description = "Crea una cuenta pública de cliente con dirección obligatoria")
+        @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Registro correcto"),
+            @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+            @ApiResponse(responseCode = "409", description = "El email ya existe")
+        })
+        public ResponseEntity<LoginResponse> signup(
+            @Parameter(description = "Datos del nuevo cliente") @RequestBody SignUpRequest signUpRequest) {
         if (userService.emailExists(signUpRequest.getEmail())) {
             throw new IllegalArgumentException("A user with that email already exists");
         }
