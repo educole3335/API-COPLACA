@@ -630,42 +630,35 @@ public class DataInitializer {
 
         private Map<String, String> buildProductImageCatalog() {
                 return Map.ofEntries(
-                        Map.entry("Tomate Local", "https://loremflickr.com/800/600/tomato"),
-                        Map.entry("Lechuga Fresca", "https://loremflickr.com/800/600/lettuce")
-                );
-        }
-
-        private Set<String> buildFruitProductNames() {
-                return Set.of(
-                        "Plátano de Canarias (IGP)",
-                        "Mango",
-                        "Papaya",
-                        "Piña",
-                        "Aguacate",
-                        "Sandía",
-                        "Manzana",
-                        "Naranja",
-                        "Fresa",
-                        "Kiwi"
+                        Map.entry("Plátano de Canarias (IGP)", "/images/products/banana-front.png"),
+                        Map.entry("Mango", "/images/products/mango-front.png"),
+                        Map.entry("Papaya", "/images/products/papaya-front.png"),
+                        Map.entry("Piña", "/images/products/pina-front.png"),
+                        Map.entry("Aguacate", "/images/products/aguacate-front.png"),
+                        Map.entry("Sandía", "/images/products/sandia-front.png"),
+                        Map.entry("Manzana", "/images/products/manzana-front.png"),
+                        Map.entry("Naranja", "/images/products/naranja-front.png"),
+                        Map.entry("Fresa", "/images/products/fresa-front.png"),
+                        Map.entry("Kiwi", "/images/products/kiwi-front.png"),
+                        Map.entry("Tomate Local", "/images/products/tomate-front.png"),
+                        Map.entry("Lechuga Fresca", "/images/products/lechuga-front.png")
                 );
         }
 
         private void syncProductImages(ProductRepository productRepository, Map<String, String> productImages) {
-                Set<String> fruitProducts = buildFruitProductNames();
                 productRepository.findAll().forEach(product -> {
-                        if (fruitProducts.contains(product.getName())) {
-                                if (product.getImageUrl() != null && !product.getImageUrl().isBlank()) {
-                                        product.setImageUrl(null);
-                                        productRepository.save(product);
-                                }
+                        String imageUrl = productImages.get(product.getName());
+                        if (imageUrl == null || imageUrl.isBlank()) {
                                 return;
                         }
 
-                        String imageUrl = productImages.get(product.getName());
-                        if (imageUrl != null && (product.getImageUrl() == null || product.getImageUrl().isBlank())) {
+                        String currentImage = Optional.ofNullable(product.getImageUrl()).orElse("").trim();
+                        // Force canonical mapping by product name so stale/crossed values are corrected.
+                        if (!imageUrl.equals(currentImage)) {
                                 product.setImageUrl(imageUrl);
                                 productRepository.save(product);
                         }
                 });
         }
+
 }
