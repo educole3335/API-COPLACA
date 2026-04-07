@@ -8,6 +8,7 @@ Inventario oficial de documentacion del backend API COPLACA.
 |---|---|---|---|
 | docs/GUIA_ARRANQUE_RAPIDO.md | Levantar backend en minutos | Desarrollo, QA | Primer setup local y smoke test inicial |
 | docs/GUIA_OPERATIVA_BACKEND.md | Operacion diaria y runbook tecnico | Desarrollo, DevOps, QA | Configuracion, ejecucion, soporte y troubleshooting |
+| docs/GUIA_SWAGGER.md | Guia completa de mantenimiento y uso de Swagger/OpenAPI | Desarrollo, QA, Arquitectura | Documentar, ordenar y ampliar la API con Swagger |
 | docs/ARQUITECTURA_MODULAR.md | Diseño arquitectonico y criterios de modularizacion | Arquitectura, Desarrollo | Entender fronteras de dominio y decisiones estructurales |
 | docs/FLUJO_API_PASO_A_PASO.md | Explicacion paso a paso del flujo tecnico (Entity -> Repository -> Service -> Mapper -> Controller) | Desarrollo, QA, Onboarding | Entender rapido como funciona una funcionalidad de punta a punta |
 | docs/MAPA_BACKEND.md | Navegacion por modulos y componentes | Desarrollo | Localizar rapido clases, capas y rutas de codigo |

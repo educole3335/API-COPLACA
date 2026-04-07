@@ -134,6 +134,7 @@ Ejecutar pruebas:
 
 - `docs/INDICE_DOCUMENTACION.md`: indice maestro con objetivo, audiencia y uso de cada documento.
 - `docs/GUIA_OPERATIVA_BACKEND.md`: guia operativa consolidada (estructura, instalaciones, arranque, extensiones, troubleshooting).
+- `docs/GUIA_SWAGGER.md`: guia de uso y mantenimiento de Swagger/OpenAPI.
 - `docs/GUIA_ARRANQUE_RAPIDO.md`: guia corta para levantar el proyecto.
 - `docs/DATOS_INICIALES_BOOTSTRAP.md`: detalle de datos de arranque y bootstrap.
 - `docs/ARQUITECTURA_MODULAR.md`: contexto de la modularizacion.
