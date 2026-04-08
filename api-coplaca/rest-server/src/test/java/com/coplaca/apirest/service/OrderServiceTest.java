@@ -28,6 +28,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -135,6 +137,38 @@ class OrderServiceTest {
         assertEquals(OrderStatus.DELIVERED, updated.getStatus());
         assertNotNull(updated.getActualDeliveryTime());
         assertEquals(DeliveryAgentStatus.AT_WAREHOUSE, delivery.getDeliveryStatus());
+    }
+
+    @Test
+    void logisticsCanConfirmPendingOrder() {
+        User logistics = logistics(2L, 30L);
+        Order order = order(20L, OrderStatus.PENDING, logistics.getWarehouse(), customer(1L));
+
+        when(userService.getUserEntityByEmail("logistics@coplaca.com")).thenReturn(logistics);
+        when(orderRepository.findById(20L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderMapper.toDTO(any(Order.class))).thenAnswer(invocation -> {
+            Order o = invocation.getArgument(0);
+            OrderDTO dto = new OrderDTO();
+            dto.setStatus(o.getStatus());
+            return dto;
+        });
+
+        OrderDTO updated = orderService.updateOrderStatus(20L, OrderStatus.CONFIRMED, "logistics@coplaca.com");
+
+        assertEquals(OrderStatus.CONFIRMED, updated.getStatus());
+    }
+
+    @Test
+    void getPendingOrdersByWarehouseUsesPendingStatusFilter() {
+        User logistics = logistics(2L, 30L);
+        when(userService.getUserEntityByEmail("logistics@coplaca.com")).thenReturn(logistics);
+        when(orderRepository.findByWarehouseIdAndStatusInOrderByCreatedAtAsc(eq(30L), eq(List.of(OrderStatus.PENDING))))
+                .thenReturn(List.of());
+
+        orderService.getPendingOrdersByWarehouse(30L, "logistics@coplaca.com");
+
+        verify(orderRepository).findByWarehouseIdAndStatusInOrderByCreatedAtAsc(eq(30L), eq(List.of(OrderStatus.PENDING)));
     }
 
     private CreateOrderItemRequest itemRequest(Long productId, BigDecimal quantity) {
