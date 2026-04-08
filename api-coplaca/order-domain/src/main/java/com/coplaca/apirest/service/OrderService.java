@@ -144,7 +144,7 @@ public class OrderService {
 
         return orderRepository.findByWarehouseIdAndStatusInOrderByCreatedAtAsc(
                         warehouseId,
-                        List.of(OrderStatus.CONFIRMED))
+                        List.of(OrderStatus.PENDING))
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());

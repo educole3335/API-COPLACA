@@ -100,6 +100,15 @@ public class OrderController {
         return ResponseHelper.ok(orderService.getConfirmedOrdersByWarehouse(warehouseId, authentication.getName()));
     }
 
+    @GetMapping("/warehouse/{warehouseId}/ready-for-assignment")
+    @PreAuthorize("hasAnyRole('LOGISTICS', 'ADMIN')")
+    @Operation(summary = "Pedidos listos para asignar", description = "Lista pedidos confirmados preparados para asignar repartidor")
+    public ResponseEntity<SuccessResponse<List<OrderDTO>>> getWarehouseReadyForAssignmentOrders(
+            @PathVariable Long warehouseId,
+            Authentication authentication) {
+        return ResponseHelper.ok(orderService.getConfirmedOrdersByWarehouse(warehouseId, authentication.getName()));
+    }
+
     @GetMapping("/warehouse/{warehouseId}/in-transit")
     @PreAuthorize("hasAnyRole('LOGISTICS', 'ADMIN')")
     @Operation(summary = "Pedidos en tránsito por almacén", description = "Lista los pedidos que ya están en reparto")
@@ -139,6 +148,16 @@ public class OrderController {
             Authentication authentication) {
         OrderDTO order = orderService.updateOrderStatus(orderId, status, authentication.getName());
         return ResponseHelper.ok(order, "Order status updated");
+    }
+
+    @PutMapping("/{orderId}/confirm")
+    @PreAuthorize("hasAnyRole('LOGISTICS', 'ADMIN')")
+    @Operation(summary = "Confirmar pedido", description = "Permite a logística confirmar pedidos pendientes")
+    public ResponseEntity<SuccessResponse<OrderDTO>> confirmOrder(
+            @PathVariable Long orderId,
+            Authentication authentication) {
+        OrderDTO order = orderService.updateOrderStatus(orderId, OrderStatus.CONFIRMED, authentication.getName());
+        return ResponseHelper.ok(order, "Order confirmed");
     }
 
     @GetMapping("/delivery-agent/{deliveryAgentId}")
